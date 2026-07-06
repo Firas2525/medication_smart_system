@@ -24,4 +24,13 @@ urlpatterns = [
     
     # معرفة حالة طلب الطبيب
     path('api/doctors/<int:doctor_id>/status/', views.get_doctor_status, name='doctor-status'),
+    
+    path('api/register/patient/', views.register_patient, name='register-patient'),
+    path('api/register/doctor/', views.register_doctor, name='register-doctor'),
+    path('api/register/supervisor/', views.register_supervisor, name='register-supervisor'),
+    path('api/users/<int:user_id>/update/', views.update_user, name='update-user'),
+    path('api/users/<int:user_id>/delete/', views.delete_user, name='delete-user'),
+    path('api/users/<int:user_id>/profile/', views.get_user_profile, name='get-user-profile'),
+    path('api/logout/', views.logout_user, name='logout-user'),
+    path('api/reset-password/', views.reset_password, name='reset-password'),
 ]

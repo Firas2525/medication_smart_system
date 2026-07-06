@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'rest_framework', 
     'crispy_forms',
     'crispy_bootstrap5',
+    
+    'rest_framework_simplejwt',
 ]
 
 MIDDLEWARE = [
@@ -132,7 +134,11 @@ AUTH_USER_MODEL = 'accounts.Users'
 
 
 
-
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 # ========== إعدادات الوسائط (Media) ==========
 # لتخزين ملفات PDF وغيرها
