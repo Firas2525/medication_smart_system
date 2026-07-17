@@ -15,10 +15,10 @@ User = get_user_model()
 # ========== APIs الإشعارات ==========
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def get_user_notifications(request, user_id):
     """
-    ✅ الصلاحية: المستخدم يرى إشعاراته فقط
+     الصلاحية: المستخدم يرى إشعاراته فقط
     API لعرض جميع إشعارات مستخدم محدد
     
     معلمات اختيارية:
@@ -29,7 +29,7 @@ def get_user_notifications(request, user_id):
     """
     current_user = request.user
     
-    # 🔒 المستخدم يرى إشعاراته فقط
+    #  المستخدم يرى إشعاراته فقط
     if   not current_user.is_superuser and  current_user.id != user_id:
         return Response({
             'status': 'error',
@@ -85,15 +85,15 @@ def get_user_notifications(request, user_id):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def get_unread_notifications(request, user_id):
     """
-    ✅ الصلاحية: المستخدم يرى إشعاراته غير المقروءة فقط
+     الصلاحية: المستخدم يرى إشعاراته غير المقروءة فقط
     API لعرض الإشعارات غير المقروءة فقط
     """
     current_user = request.user
     
-    # 🔒 المستخدم يرى إشعاراته فقط
+    #  المستخدم يرى إشعاراته فقط
     if current_user.id != user_id:
         return Response({
             'status': 'error',
@@ -124,17 +124,17 @@ def get_unread_notifications(request, user_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def mark_notification_as_read(request, notification_id):
     """
-    ✅ الصلاحية: المستخدم يحدد إشعاراته فقط
+     الصلاحية: المستخدم يحدد إشعاراته فقط
     API لتحديد إشعار كمقروء
     """
     try:
         notification = Notification.objects.get(id=notification_id)
         current_user = request.user
         
-        # 🔒 المستخدم يحدد إشعاراته فقط
+        #  المستخدم يحدد إشعاراته فقط
         if current_user.id != notification.user.id:
             return Response({
                 'status': 'error',
@@ -162,17 +162,17 @@ def mark_notification_as_read(request, notification_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def mark_notification_as_delivered(request, notification_id):
     """
-    ✅ الصلاحية: المستخدم يحدد إشعاراته فقط
+     الصلاحية: المستخدم يحدد إشعاراته فقط
     API لتحديد إشعار كتم تسليمه للجهاز
     """
     try:
         notification = Notification.objects.get(id=notification_id)
         current_user = request.user
         
-        # 🔒 المستخدم يحدد إشعاراته فقط
+        #  المستخدم يحدد إشعاراته فقط
         if current_user.id != notification.user.id:
             return Response({
                 'status': 'error',
@@ -200,15 +200,15 @@ def mark_notification_as_delivered(request, notification_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def mark_all_notifications_read(request, user_id):
     """
-    ✅ الصلاحية: المستخدم يحدد كل إشعاراته كمقروءة
+     الصلاحية: المستخدم يحدد كل إشعاراته كمقروءة
     API لتحديد كل إشعارات المستخدم كمقروءة
     """
     current_user = request.user
     
-    # 🔒 المستخدم يحدد إشعاراته فقط
+    #  المستخدم يحدد إشعاراته فقط
     if current_user.id != user_id:
         return Response({
             'status': 'error',
@@ -237,17 +237,17 @@ def mark_all_notifications_read(request, user_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def update_notification_action(request, notification_id):
     """
-    ✅ الصلاحية: المستخدم يحدد تفاعله مع إشعاراته فقط
+     الصلاحية: المستخدم يحدد تفاعله مع إشعاراته فقط
     API لتحديد تفاعل المستخدم مع الإشعار
     """
     try:
         notification = Notification.objects.get(id=notification_id)
         current_user = request.user
         
-        # 🔒 المستخدم يحدد تفاعله مع إشعاراته فقط
+        #  المستخدم يحدد تفاعله مع إشعاراته فقط
         if current_user.id != notification.user.id:
             return Response({
                 'status': 'error',
@@ -316,17 +316,17 @@ def update_notification_action(request, notification_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def cancel_notification(request, notification_id):
     """
-    ✅ الصلاحية: المستخدم يلغي إشعاراته فقط
+     الصلاحية: المستخدم يلغي إشعاراته فقط
     API لإلغاء إشعار
     """
     try:
         notification = Notification.objects.get(id=notification_id)
         current_user = request.user
         
-        # 🔒 المستخدم يلغي إشعاراته فقط
+        #  المستخدم يلغي إشعاراته فقط
         if current_user.id != notification.user.id:
             return Response({
                 'status': 'error',
@@ -353,17 +353,17 @@ def cancel_notification(request, notification_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def retry_failed_notification(request, notification_id):
     """
-    ✅ الصلاحية: المستخدم يعيد محاولة إشعاراته فقط
+     الصلاحية: المستخدم يعيد محاولة إشعاراته فقط
     API لإعادة محاولة إرسال إشعار فاشل
     """
     try:
         notification = Notification.objects.get(id=notification_id)
         current_user = request.user
         
-        # 🔒 المستخدم يعيد محاولة إشعاراته فقط
+        #  المستخدم يعيد محاولة إشعاراته فقط
         if current_user.id != notification.user.id:
             return Response({
                 'status': 'error',
@@ -397,17 +397,17 @@ def retry_failed_notification(request, notification_id):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def delete_notification(request, notification_id):
     """
-    ✅ الصلاحية: المستخدم يحذف إشعاراته فقط
+     الصلاحية: المستخدم يحذف إشعاراته فقط
     API لحذف إشعار
     """
     try:
         notification = Notification.objects.get(id=notification_id)
         current_user = request.user
         
-        # 🔒 المستخدم يحذف إشعاراته فقط
+        #  المستخدم يحذف إشعاراته فقط
         if current_user.id != notification.user.id:
             return Response({
                 'status': 'error',
@@ -429,15 +429,15 @@ def delete_notification(request, notification_id):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def delete_all_read_notifications(request, user_id):
     """
-    ✅ الصلاحية: المستخدم يحذف إشعاراته المقروءة فقط
+     الصلاحية: المستخدم يحذف إشعاراته المقروءة فقط
     API لحذف كل الإشعارات المقروءة لمستخدم
     """
     current_user = request.user
     
-    # 🔒 المستخدم يحذف إشعاراته فقط
+    #  المستخدم يحذف إشعاراته فقط
     if current_user.id != user_id:
         return Response({
             'status': 'error',
@@ -472,9 +472,8 @@ def notify_doctor_about_switch(request):
         
 """
 التغيير	السطر
-إضافة from rest_framework.permissions import IsAuthenticated	✅
-إضافة @permission_classes([IsAuthenticated]) لكل دوال API	✅
-إضافة current_user = request.user للتحقق من هوية المستخدم	✅
-إضافة صلاحية: المستخدم يرى/يعدل/يحذف إشعاراته فقط	✅
-إضافة تعليقات توضيحية (# 🔒) لكل صلاحية	✅
+إضافة from rest_framework.permissions import IsAuthenticated	
+إضافة @permission_classes([IsAuthenticated]) لكل دوال API	
+إضافة current_user = request.user للتحقق من هوية المستخدم	
+إضافة صلاحية: المستخدم يرى/يعدل/يحذف إشعاراته فقط	
 """

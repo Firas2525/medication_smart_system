@@ -72,7 +72,7 @@ class ReportGenerator:
             f"الجرعات الفائتة: {report.missed_doses}"
         )
         
-        # ✅ 1. إرسال للمريض نفسه
+        #  1. إرسال للمريض نفسه
         Notification.objects.create(
             user=self.patient,
             schedule=None,
@@ -90,7 +90,7 @@ class ReportGenerator:
             }
         )
         
-        # ✅ 2. إرسال للأطباء
+        #  2. إرسال للأطباء
         for doctor in contacts['doctors']:
             Notification.objects.create(
                 user=doctor,
@@ -109,7 +109,7 @@ class ReportGenerator:
                 }
             )
         
-        # ✅ 3. إرسال للمشرفين
+        #  3. إرسال للمشرفين
         for supervisor in contacts['supervisors']:
             Notification.objects.create(
                 user=supervisor,
@@ -204,7 +204,7 @@ class ReportGenerator:
             }
         )
         
-        # ✅ إرسال إشعارات للمريض والأطباء والمشرفين
+        #  إرسال إشعارات للمريض والأطباء والمشرفين
         if report:
             self._notify_doctors_and_supervisors(report)
         

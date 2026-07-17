@@ -34,7 +34,7 @@ class SmartScheduleSerializer(serializers.ModelSerializer):
             'reminder_sent',        # هل تم إرسال التذكير؟
             'notes'                 # ملاحظات
         ]
-        # ✅ هذه الحقول للقراءة فقط (لا يمكن تعديلها عبر API)
+        #  هذه الحقول للقراءة فقط (لا يمكن تعديلها عبر API)
         read_only_fields = [
             'created_at',           # يُملأ تلقائياً عند الإنشاء
             'updated_at',           # يُملأ تلقائياً عند التعديل
@@ -65,13 +65,13 @@ class SmartScheduleSerializer(serializers.ModelSerializer):
     
 """_
         التغيير	السطر	الغرض
-إضافة patient إلى read_only_fields	✅	🔒 منع تغيير المريض المرتبط بالجرعة
-إضافة medication إلى read_only_fields	✅	🔒 منع تغيير الدواء المرتبط بالجرعة
-إضافة medication_name إلى read_only_fields	✅	🔒 منع تعديل اسم الدواء المشتق
-إضافة patient_name إلى read_only_fields	✅	🔒 منع تعديل اسم المريض المشتق
-إضافة status_display إلى read_only_fields	✅	🔒 منع تعديل نص الحالة المشتق
-إضافة is_critical_display إلى read_only_fields	✅	🔒 منع تعديل نص الحرجة المشتق
-ترتيب الحقول بشكل منظم	✅	📋 لسهولة القراءة
-إضافة تعليقات توضيحية لكل حقل	✅	📝 لتوضيح وظيفة كل حقل
+إضافة patient إلى read_only_fields	 منع تغيير المريض المرتبط بالجرعة
+إضافة medication إلى read_only_fields	 منع تغيير الدواء المرتبط بالجرعة
+إضافة medication_name إلى read_only_fields	 منع تعديل اسم الدواء المشتق
+إضافة patient_name إلى read_only_fields	 منع تعديل اسم المريض المشتق
+إضافة status_display إلى read_only_fields	 منع تعديل نص الحالة المشتق
+إضافة is_critical_display إلى read_only_fields	 منع تعديل نص الحرجة المشتق
+ترتيب الحقول بشكل منظم	 لسهولة القراءة
+إضافة تعليقات توضيحية لكل حقل	 لتوضيح وظيفة كل حقل
 
 """

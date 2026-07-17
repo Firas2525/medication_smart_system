@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # ========== المسارات القديمة (HTML) ==========
+    # ========== مسارات  تجريبية قديمة (HTML) ==========
     path('library/', views.drug_library, name='drug_library'),
     path('library/add/', views.add_drug_to_library, name='add_drug_to_library'),
     path('patient-medications/', views.patient_medications, name='patient_medications'),
@@ -24,10 +24,10 @@ urlpatterns = [
     path('api/patient-medications/<int:medication_id>/delete/', views.delete_patient_medication_api, name='delete-patient-medication'),
     path('api/patient-medications/<int:medication_id>/detail/', views.patient_medication_detail_api, name='patient-medication-detail'),
     
-    # ========== ✅ مسارات اقتراح البدائل الذكية ==========
+    # ==========  مسارات اقتراح البدائل الذكية ==========
     path('api/drugs/<int:drug_id>/alternatives/', views.suggest_alternatives, name='suggest-alternatives'),
     path('api/drugs/<int:drug_id>/with-alternatives/', views.drug_with_alternatives, name='drug-with-alternatives'),
-    # ✅ مسار التحويل إلى بديل
+    #  مسار التحويل إلى بديل
     path('api/patient-medications/switch/', views.switch_to_alternative, name='switch-to-alternative'),
 
 ]
@@ -41,8 +41,8 @@ GET	/api/drugs/<id>/	تفاصيل دواء
 POST	/api/drugs/add/	إضافة دواء
 PUT	/api/drugs/<id>/update/	تعديل دواء
 DELETE	/api/drugs/<id>/delete/	حذف دواء
-GET	/api/drugs/<id>/alternatives/	✅ بدائل ذكية
-GET	/api/drugs/<id>/with-alternatives/	✅ دواء + بدائله
+GET	/api/drugs/<id>/alternatives/	 بدائل ذكية
+GET	/api/drugs/<id>/with-alternatives/	 دواء + بدائله
 GET	/api/patient-medications/<patient_id>/	أدوية مريض
 POST	/api/patient-medications/add/	إضافة دواء لمريض
 PUT	/api/patient-medications/<id>/update/	تعديل دواء مريض

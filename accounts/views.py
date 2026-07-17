@@ -6,19 +6,19 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from accounts.models import UserRelationship  # ✅ أضف هذا
+from accounts.models import UserRelationship 
 from .serializers import UserSerializer
 
 User = get_user_model()
 
-
-# ========== الدوال القديمة (HTML) ==========
+"""""
+# ========= توابع قديمة  ==========
 
 def register(request):
     return HttpResponse("صفحة التسجيل - قيد التطوير")
 
 def user_profile(request, user_id):
-    return HttpResponse(f"صفحة المستخدم رقم {user_id} - قيد التطوير")
+    return HttpResponse(f"صفحة المستخدم  - قيد التطوير")
 
 def patient_list(request):
     return HttpResponse("قائمة المرضى - قيد التطوير")
@@ -29,7 +29,7 @@ def doctor_list(request):
 def relationships(request):
     return HttpResponse("علاقات المستخدمين - قيد التطوير")
 
-
+"""
 # ==========  API الجديدة ==========
 
 @api_view(['POST'])
@@ -211,7 +211,18 @@ def get_doctor_status(request, doctor_id):
 
 @api_view(['POST'])
 def register_patient(request):
-    """تسجيل مريض جديد"""
+    """تسجيل مريض جديد
+    
+    {
+    "username": "patient_test",
+    "email": "patient@example.com",
+    "password": "123456",
+    "first_name": "أحمد",
+    "last_name": "محمد",
+    "phone_number": "0500000000"
+}
+    
+    """
     data = request.data.copy()
     data['user_type'] = 'patient'
     data['is_approved'] = True
@@ -256,7 +267,7 @@ def update_user(request, user_id):
     """تحديث بيانات مستخدم (نفسه أو Admin)"""
     current_user = request.user
     
-    # 🔒 التحقق من الصلاحية
+    # التحقق من الصلاحية
     if not current_user.is_superuser and current_user.id != user_id:
         return Response({
             'status': 'error',
@@ -273,7 +284,7 @@ def update_user(request, user_id):
     
     serializer = UserSerializer(user, data=request.data, partial=True)
     if serializer.is_valid():
-        # إذا كان هناك كلمة مرور جديدة، يتم تشفيرها
+        # إذا في كلمة مرور جديدة، يتم تشفيرها
         if 'password' in request.data:
             user.set_password(request.data['password'])
             user.save()
@@ -292,7 +303,7 @@ def delete_user(request, user_id):
     """حذف مستخدم (نفسه أو Admin)"""
     current_user = request.user
     
-    # 🔒 التحقق من الصلاحية
+    #  التحقق من الصلاحية
     if not current_user.is_superuser and current_user.id != user_id:
         return Response({
             'status': 'error',
@@ -351,7 +362,6 @@ def logout_user(request):
         'message': 'تم تسجيل الخروج بنجاح'
     }, status=200)
     
-# accounts/views.py
 
 @api_view(['POST'])
 def reset_password(request):

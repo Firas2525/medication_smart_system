@@ -37,11 +37,11 @@ class NotificationSerializer(serializers.ModelSerializer):
             'last_error',               # آخر خطأ
             'metadata'                  # بيانات إضافية
         ]
-        # ✅ هذه الحقول للقراءة فقط (تعزيز الأمان)
+        #  هذه الحقول للقراءة فقط (تعزيز الأمان)
         read_only_fields = [
             'created_at',               # يُملأ تلقائياً عند الإنشاء
-            'user',                     # 🔒 يمنع تغيير المستخدم المرتبط بالإشعار
-            'schedule',                 # 🔒 يمنع تغيير الجدول المرتبط بالإشعار
+            'user',                     #  يمنع تغيير المستخدم المرتبط بالإشعار
+            'schedule',                 #  يمنع تغيير الجدول المرتبط بالإشعار
             'notification_type_display', # مشتق من notification_type
             'status_display',           # مشتق من status
             'user_action_display',      # مشتق من user_action
@@ -109,13 +109,13 @@ class NotificationSerializer(serializers.ModelSerializer):
         
 """
      التغيير	الغرض
-إضافة user إلى read_only_fields	🔒 منع تغيير المستخدم المرتبط بالإشعار
-إضافة schedule إلى read_only_fields	🔒 منع تغيير الجدول المرتبط بالإشعار
-إضافة notification_type_display إلى read_only_fields	🔒 منع تعديل النص المشتق
-إضافة status_display إلى read_only_fields	🔒 منع تعديل النص المشتق
-إضافة user_action_display إلى read_only_fields	🔒 منع تعديل النص المشتق
-إضافة time_ago إلى read_only_fields	🔒 منع تعديل الوقت المشتق
-ترتيب الحقول بشكل منظم	📋 لسهولة القراءة
-إضافة تعليقات توضيحية لكل حقل	📝 لتوضيح وظيفة كل حقل
+إضافة user إلى read_only_fields	 منع تغيير المستخدم المرتبط بالإشعار
+إضافة schedule إلى read_only_fields	منع تغيير الجدول المرتبط بالإشعار
+إضافة notification_type_display إلى read_only_fields	 منع تعديل النص المشتق
+إضافة status_display إلى read_only_fields	 منع تعديل النص المشتق
+إضافة user_action_display إلى read_only_fields	 منع تعديل النص المشتق
+إضافة time_ago إلى read_only_fields	 منع تعديل الوقت المشتق
+ترتيب الحقول بشكل منظم	 لسهولة القراءة
+إضافة تعليقات توضيحية لكل حقل	 لتوضيح وظيفة كل حقل
 _summary_
         """

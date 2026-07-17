@@ -27,3 +27,7 @@ from django.test import TestCase
 #GET http://127.0.0.1:8000/accounts/api/doctors/all/
 #GET http://127.0.0.1:8000/accounts/api/doctors/3/status/
 #POST http://127.0.0.1:8000/accounts/api/doctors/3/reject/
+#http://127.0.0.1:8000/accounts/api/register/patient/
+#POST http://127.0.0.1:8000/api/token/
+#افتح: http://127.0.0.1:8000/admin/accounts/users/
+

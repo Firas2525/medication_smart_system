@@ -25,19 +25,19 @@ User = get_user_model()
 @permission_classes([IsAuthenticated])
 def get_patient_reports(request, patient_id):
     """
-    ✅ الصلاحية: المريض يرى تقاريره فقط | الطبيب يرى تقارير مرضاه
+     الصلاحية: المريض يرى تقاريره فقط | الطبيب يرى تقارير مرضاه
     API لعرض جميع تقارير مريض محدد
     """
     current_user = request.user
     
-    # 🔒 المريض: يرى تقاريره فقط
+    #  المريض: يرى تقاريره فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك رؤية تقارير مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يرى تقارير مرضاه فقط
+    #  الطبيب: يرى تقارير مرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -75,7 +75,7 @@ def get_patient_reports(request, patient_id):
 @permission_classes([IsAuthenticated])
 def generate_weekly_report(request, patient_id):
     """
-    ✅ الصلاحية: المريض يولد تقريره فقط | الطبيب يولد تقارير مرضاه
+     الصلاحية: المريض يولد تقريره فقط | الطبيب يولد تقارير مرضاه
     API لتوليد تقرير أسبوعي لمريض
     
     معلمات اختيارية:
@@ -83,14 +83,14 @@ def generate_weekly_report(request, patient_id):
     """
     current_user = request.user
     
-    # 🔒 المريض: يولد تقريره فقط
+    #  المريض: يولد تقريره فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك توليد تقرير لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يولد تقارير مرضاه فقط
+    #  الطبيب: يولد تقارير مرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -134,7 +134,7 @@ def generate_weekly_report(request, patient_id):
 @permission_classes([IsAuthenticated])
 def generate_monthly_report(request, patient_id):
     """
-    ✅ الصلاحية: المريض يولد تقريره فقط | الطبيب يولد تقارير مرضاه
+     الصلاحية: المريض يولد تقريره فقط | الطبيب يولد تقارير مرضاه
     API لتوليد تقرير شهري لمريض
     
     معلمات اختيارية:
@@ -142,14 +142,14 @@ def generate_monthly_report(request, patient_id):
     """
     current_user = request.user
     
-    # 🔒 المريض: يولد تقريره فقط
+    #  المريض: يولد تقريره فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك توليد تقرير لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يولد تقارير مرضاه فقط
+    #  الطبيب: يولد تقارير مرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -193,21 +193,21 @@ def generate_monthly_report(request, patient_id):
 @permission_classes([IsAuthenticated])
 def get_report_detail(request, report_id):
     """
-    ✅ الصلاحية: المستخدم يرى تقاريره فقط
+     الصلاحية: المستخدم يرى تقاريره فقط
     API لعرض تفاصيل تقرير محدد
     """
     try:
         report = Report.objects.get(id=report_id)
         current_user = request.user
         
-        # 🔒 المريض: يرى تقاريره فقط
+        #  المريض: يرى تقاريره فقط
         if current_user.user_type == 'patient' and current_user.id != report.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك رؤية تقرير مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يرى تقارير مرضاه فقط
+        #  الطبيب: يرى تقارير مرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -238,19 +238,19 @@ def get_report_detail(request, report_id):
 @permission_classes([IsAuthenticated])
 def get_adherence_statistics(request, patient_id):
     """
-    ✅ الصلاحية: المريض يرى إحصائياته فقط | الطبيب يرى إحصائيات مرضاه
+     الصلاحية: المريض يرى إحصائياته فقط | الطبيب يرى إحصائيات مرضاه
     API لعرض إحصائيات الالتزام للمريض
     """
     current_user = request.user
     
-    # 🔒 المريض: يرى إحصائياته فقط
+    #  المريض: يرى إحصائياته فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك رؤية إحصائيات مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يرى إحصائيات مرضاه فقط
+    #  الطبيب: يرى إحصائيات مرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -345,21 +345,21 @@ def get_adherence_statistics(request, patient_id):
 @permission_classes([IsAuthenticated])
 def delete_report(request, report_id):
     """
-    ✅ الصلاحية: المستخدم يحذف تقاريره فقط
+     الصلاحية: المستخدم يحذف تقاريره فقط
     API لحذف تقرير
     """
     try:
         report = Report.objects.get(id=report_id)
         current_user = request.user
         
-        # 🔒 المريض: يحذف تقاريره فقط
+        #  المريض: يحذف تقاريره فقط
         if current_user.user_type == 'patient' and current_user.id != report.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك حذف تقرير مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يحذف تقارير مرضاه فقط
+        #  الطبيب: يحذف تقارير مرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -386,27 +386,27 @@ def delete_report(request, report_id):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
-# ========== ✅ API تحميل التقرير بصيغة PDF ==========
+# ==========  API تحميل التقرير بصيغة PDF ==========
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def download_report_pdf(request, report_id):
     """
-    ✅ API لتحميل تقرير بصيغة PDF
+     API لتحميل تقرير بصيغة PDF
     طريقة الاستخدام: GET /reports/api/<report_id>/download/
     """
     try:
         report = Report.objects.get(id=report_id)
         current_user = request.user
         
-        # 🔒 المريض: يحمّل تقاريره فقط
+        #  المريض: يحمّل تقاريره فقط
         if current_user.user_type == 'patient' and current_user.id != report.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك تحميل تقرير مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يحمّل تقارير مرضاه فقط
+        #  الطبيب: يحمّل تقارير مرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -458,33 +458,32 @@ def download_report_pdf(request, report_id):
     
 """"
 الدالة	المريض	الطبيب	المشرف/Admin
-get_patient_reports	✅ يرى تقاريره فقط	✅ يرى تقارير مرضاه	✅ يرى الكل
-generate_weekly_report	✅ يولد تقريره فقط	✅ يولد تقارير مرضاه	✅ يولد للكل
-generate_monthly_report	✅ يولد تقريره فقط	✅ يولد تقارير مرضاه	✅ يولد للكل
-get_report_detail	✅ يرى تقريره فقط	✅ يرى تقارير مرضاه	✅ يرى الكل
-get_adherence_statistics	✅ يرى إحصائياته فقط	✅ يرى إحصائيات مرضاه	✅ يرى الكل
-delete_report	✅ يحذف تقريره فقط	✅ يحذف تقارير مرضاه	✅ يحذف الكل
+get_patient_reports	 يرى تقاريره فقط	 يرى تقارير مرضاه	 يرى الكل
+generate_weekly_report	 يولد تقريره فقط يولد تقارير مرضاه	 يولد للكل
+generate_monthly_report	 يولد تقريره فقط	 يولد تقارير مرضاه	 يولد للكل
+get_report_detail	 يرى تقريره فقط	 يرى تقارير مرضاه	 يرى الكل
+get_adherence_statistics	 يرى إحصائياته فقط	 يرى إحصائيات مرضاه	 يرى الكل
+delete_report	 يحذف تقريره فقط	 يحذف تقارير مرضاه	 يحذف الكل
 
 
 
 التغيير	السطر
-إضافة from rest_framework.permissions import IsAuthenticated	✅
-إضافة from accounts.models import UserRelationship	✅
-إضافة @permission_classes([IsAuthenticated]) لكل دوال API	✅
-إضافة current_user = request.user للتحقق من هوية المستخدم	✅
-إضافة صلاحية المريض (يرى/يولد/يحذف تقاريره فقط)	✅
-إضافة صلاحية الطبيب (يرى/يولد/يحذف تقارير مرضاه فقط)	✅
-إضافة تعليقات توضيحية (# 🔒) لكل صلاحية	✅
+إضافة from rest_framework.permissions import IsAuthenticated	
+إضافة from accounts.models import UserRelationship	
+إضافة @permission_classes([IsAuthenticated]) لكل دوال API	
+إضافة current_user = request.user للتحقق من هوية المستخدم	
+إضافة صلاحية المريض (يرى/يولد/يحذف تقاريره فقط)	
+إضافة صلاحية الطبيب (يرى/يولد/يحذف تقارير مرضاه فقط)	
 
 
 
 التغيير	السطر
-✅ إضافة from django.http import FileResponse	✅
-✅ إضافة from django.conf import settings	✅
-✅ إضافة import os	✅
-✅ إضافة دالة download_report_pdf	✅
-✅ إضافة صلاحية المريض لتحميل تقاريره فقط	✅
-✅ إضافة صلاحية الطبيب لتحميل تقارير مرضاه فقط	✅
-✅ توليد PDF تلقائياً عند الطلب إذا لم يكن موجوداً
+ إضافة from django.http import FileResponse	
+ إضافة from django.conf import settings	
+ إضافة import os	
+ إضافة دالة download_report_pdf	
+ إضافة صلاحية المريض لتحميل تقاريره فقط	
+ إضافة صلاحية الطبيب لتحميل تقارير مرضاه فقط	
+ توليد PDF تلقائياً عند الطلب إذا لم يكن موجوداً
 
         """

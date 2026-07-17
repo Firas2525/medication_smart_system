@@ -9,12 +9,11 @@ from django.contrib.auth import get_user_model
 from accounts.models import UserRelationship
 from .models import DrugLibrary, PatientMedication
 from .serializers import DrugLibrarySerializer, PatientMedicationSerializer
-from datetime import date, datetime  # ✅ أو استخدم هذا
+from datetime import date, datetime  
 User = get_user_model()
 
 
-# ========== دوال HTML المؤقتة ==========
-# هذه الدوال تستخدم لعرض صفحات HTML بسيطة للتجربة
+# ========== توابع HTML المؤقتة ==========
 
 def drug_library(request):
     return HttpResponse("صفحة مكتبة الأدوية - قيد التطوير")
@@ -76,9 +75,10 @@ def add_drug_to_library_api(request):
     """API لإضافة دواء جديد إلى المكتبة
     /medications/api/drugs/add/
     """
-    serializer = DrugLibrarySerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
+    serializer = DrugLibrarySerializer(data=request.data)#يأخذ البيانات التي ارسلها المستخدم في جسم الطلب)
+    
+    if serializer.is_valid():#يتحقق من  البيانات صحيحة (كل الحقول المطلوبة موجودة، الأنواع صحيحة)
+        serializer.save()#يحفظ الدواء الجديد في قاعدة البيانات
         return Response({
             'status': 'success',
             'message': 'تم إضافة الدواء بنجاح',
@@ -139,22 +139,22 @@ def delete_drug_from_library(request, drug_id):
 # - الطبيب: يرى/يضيف/يعدل/يحذف أدوية مرضاه فقط
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def patient_medications_list(request, patient_id):
     """
-    ✅ الصلاحية: المريض يرى أدويته فقط | الطبيب يرى مرضاه فقط
+     الصلاحية: المريض يرى أدويته فقط | الطبيب يرى مرضاه فقط
     API لعرض جميع أدوية مريض محدد
     """
     current_user = request.user
     
-    # 🔒 المريض: يرى أدويته فقط
+    #  المريض: يرى أدويته فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك رؤية أدوية مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يرى مرضاه فقط
+    #  الطبيب: يرى مرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -191,10 +191,10 @@ def patient_medications_list(request, patient_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def add_patient_medication_api(request):
     """
-    ✅ الصلاحية: المريض يضيف لنفسه | الطبيب يضيف لمرضاه
+     الصلاحية: المريض يضيف لنفسه | الطبيب يضيف لمرضاه
     API لإضافة دواء جديد لمريض
     """
     data = request.data.copy()
@@ -209,14 +209,14 @@ def add_patient_medication_api(request):
             'message': 'المريض غير موجود'
         }, status=status.HTTP_404_NOT_FOUND)
     
-    # 🔒 المريض: يضيف لنفسه فقط
+    #  المريض: يضيف لنفسه فقط
     if current_user.user_type == 'patient' and current_user.id != patient.id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك إضافة دواء لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يضيف لمرضاه فقط
+    #  الطبيب: يضيف لمرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -256,24 +256,24 @@ def add_patient_medication_api(request):
 
 
 @api_view(['PUT'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def update_patient_medication_api(request, medication_id):
     """
-    ✅ الصلاحية: المريض يعدل لنفسه | الطبيب يعدل لمرضاه
+     الصلاحية: المريض يعدل لنفسه | الطبيب يعدل لمرضاه
     API لتعديل دواء مريض
     """
     try:
         medication = PatientMedication.objects.get(id=medication_id)
         current_user = request.user
         
-        # 🔒 المريض: يعدل لنفسه فقط
+        #  المريض: يعدل لنفسه فقط
         if current_user.user_type == 'patient' and current_user.id != medication.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك تعديل دواء مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يعدل لمرضاه فقط
+        #  الطبيب: يعدل لمرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -310,24 +310,24 @@ def update_patient_medication_api(request, medication_id):
 
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def delete_patient_medication_api(request, medication_id):
     """
-    ✅ الصلاحية: المريض يحذف لنفسه | الطبيب يحذف لمرضاه
+     الصلاحية: المريض يحذف لنفسه | الطبيب يحذف لمرضاه
     API لحذف دواء مريض (إلغاء تنشيطه)
     """
     try:
         medication = PatientMedication.objects.get(id=medication_id)
         current_user = request.user
         
-        # 🔒 المريض: يحذف لنفسه فقط
+        #  المريض: يحذف لنفسه فقط
         if current_user.user_type == 'patient' and current_user.id != medication.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك حذف دواء مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يحذف لمرضاه فقط
+        #  الطبيب: يحذف لمرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -356,24 +356,24 @@ def delete_patient_medication_api(request, medication_id):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def patient_medication_detail_api(request, medication_id):
     """
-    ✅ الصلاحية: المريض يرى تفاصيل دوائه | الطبيب يرى تفاصيل مرضاه
+     الصلاحية: المريض يرى تفاصيل دوائه | الطبيب يرى تفاصيل مرضاه
     API لعرض تفاصيل دواء محدد لمريض
     """
     try:
         medication = PatientMedication.objects.get(id=medication_id)
         current_user = request.user
         
-        # 🔒 المريض: يرى تفاصيل دوائه فقط
+        #  المريض: يرى تفاصيل دوائه فقط
         if current_user.user_type == 'patient' and current_user.id != medication.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك رؤية دواء مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يرى تفاصيل مرضاه فقط
+        #  الطبيب: يرى تفاصيل مرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -402,10 +402,10 @@ def patient_medication_detail_api(request, medication_id):
 # ========== API اقتراح البدائل الذكية ==========
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def suggest_alternatives(request, drug_id):
     """
-    ✅ API لاقتراح بدائل ذكية لدواء معين
+     API لاقتراح بدائل ذكية لدواء معين
     طريقة الاستخدام: GET /medications/api/drugs/<drug_id>/alternatives/
     
     يعرض أدوية في نفس التصنيف العلاجي مرتبة حسب معدل النجاح
@@ -445,10 +445,10 @@ def suggest_alternatives(request, drug_id):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def drug_with_alternatives(request, drug_id):
     """
-    ✅ API لعرض دواء مع بدائله الذكية
+     API لعرض دواء مع بدائله الذكية
     طريقة الاستخدام: GET /medications/api/drugs/<drug_id>/with-alternatives/
     """
     try:
@@ -482,7 +482,7 @@ def drug_with_alternatives(request, drug_id):
 @permission_classes([IsAuthenticated])
 def switch_to_alternative(request):
     """
-    ✅ API لتحويل المريض إلى دواء بديل مع إعادة جدولة تلقائية
+     API لتحويل المريض إلى دواء بديل مع إعادة جدولة تلقائية
     طريقة الاستخدام: POST /medications/api/patient-medications/switch/
     
     البيانات المطلوبة (JSON):
@@ -499,7 +499,7 @@ def switch_to_alternative(request):
         # 1. جلب الدواء الحالي
         old_med = PatientMedication.objects.get(id=data.get('patient_medication_id'))
         
-        # ✅ التحقق من صلاحية المستخدم
+        #  التحقق من صلاحية المستخدم
         if current_user.user_type == 'patient' and current_user.id != old_med.patient.id:
             return Response({
                 'status': 'error',
@@ -594,7 +594,7 @@ def switch_to_alternative(request):
 """"
 ملخص التغييرات التي أضفتها:
 التغيير	السطر
-✅ إضافة دالة suggest_alternatives	نهاية الملف
-✅ إضافة دالة drug_with_alternatives	نهاية الملف
-✅ إضافة @permission_classes([IsAuthenticated]) لكل دوال API الجديدة	✅
+ إضافة  suggest_alternatives	نهاية الملف
+ إضافة  drug_with_alternatives	نهاية الملف
+ إضافة @permission_classes([IsAuthenticated]) لكل دوال API الجديدة	
         """

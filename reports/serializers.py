@@ -32,10 +32,10 @@ class ReportSerializer(serializers.ModelSerializer):
             'generated_at',            # وقت الإنشاء
             'created_at'               # تاريخ الإنشاء (للقراءة فقط)
         ]
-        # ✅ هذه الحقول للقراءة فقط (تعزيز الأمان)
+        #  هذه الحقول للقراءة فقط (تعزيز الأمان)
         read_only_fields = [
             'created_at',              # يُملأ تلقائياً عند الإنشاء
-            'patient',                 # 🔒 يمنع تغيير المريض المرتبط بالتقرير
+            'patient',                 #  يمنع تغيير المريض المرتبط بالتقرير
             'patient_name',            # مشتق من patient (للقراءة فقط)
             'report_type_display',     # مشتق من report_type
             'adherence_level',         # مشتق من adherence_rate
@@ -61,12 +61,12 @@ class ReportSerializer(serializers.ModelSerializer):
     """
         
 التغيير	الغرض
-إضافة patient إلى read_only_fields	🔒 منع تغيير المريض المرتبط بالتقرير
-إضافة patient_name إلى read_only_fields	🔒 منع تعديل اسم المريض المشتق
-إضافة report_type_display إلى read_only_fields	🔒 منع تعديل النص المشتق
-إضافة adherence_level إلى read_only_fields	🔒 منع تعديل مستوى الالتزام المشتق
-إضافة generated_at إلى read_only_fields	🔒 يُملأ تلقائياً عند توليد التقرير
-ترتيب الحقول بشكل منظم	📋 لسهولة القراءة
-إضافة تعليقات توضيحية لكل حقل	📝 لتوضيح وظيفة كل حقل
+إضافة patient إلى read_only_fields	 منع تغيير المريض المرتبط بالتقرير
+إضافة patient_name إلى read_only_fields	 منع تعديل اسم المريض المشتق
+إضافة report_type_display إلى read_only_fields	 منع تعديل النص المشتق
+إضافة adherence_level إلى read_only_fields	 منع تعديل مستوى الالتزام المشتق
+إضافة generated_at إلى read_only_fields	 يُملأ تلقائياً عند توليد التقرير
+ترتيب الحقول بشكل منظم	 لسهولة القراءة
+إضافة تعليقات توضيحية لكل حقل	 لتوضيح وظيفة كل حقل
 
         """

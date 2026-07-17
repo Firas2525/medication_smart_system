@@ -17,7 +17,7 @@ class UsersCreationForm(UserCreationForm):
         fields = ('username', 'email', 'user_type', 'first_name', 'last_name', 'gender')
     
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)# استدعاء دالة البناء للنموذج الأصلي (UserCreationForm)
+        super().__init__(*args, **kwargs)# استدعاء تابع البناء للنموذج الأصلي (UserCreationForm)
         
         # التحقق من وجود الحقول قبل تعيين التسميات
         if 'username' in self.fields:
@@ -73,6 +73,36 @@ class PatientProfileForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():#تعيين فئة CSS لجميع الحقول في النموذج لتكون متوافقة مع Bootstrap
             field.widget.attrs['class'] = 'form-control'
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
             
             
             

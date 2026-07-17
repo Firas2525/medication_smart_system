@@ -147,3 +147,10 @@ import os
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=60),      #  شهرين (60 يوم)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=120),     #  4 أشهر (120 يوم)
+}

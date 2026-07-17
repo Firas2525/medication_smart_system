@@ -43,7 +43,7 @@ class DrugLibrary(models.Model):
     
     def update_rating_on_side_effect(self, severity):
         """
-        ✅ تحديث معدل النجاح عند الإبلاغ عن أثر جانبي
+         تحديث معدل النجاح عند الإبلاغ عن أثر جانبي
         severity: 'mild', 'moderate', 'severe'
         """
         # تحديد قيمة الخصم حسب شدة الأثر الجانبي
@@ -221,7 +221,7 @@ class SideEffect(models.Model):
     
     def save(self, *args, **kwargs):
         """
-        ✅ عند حفظ أثر جانبي، يتم تحديث تقييم الدواء المرتبط تلقائياً
+         عند حفظ أثر جانبي، يتم تحديث تقييم الدواء المرتبط تلقائياً
         """
         # حفظ الأثر الجانبي أولاً
         super().save(*args, **kwargs)
@@ -303,11 +303,16 @@ class Report(models.Model):
     
     
     
+    
+    
+    
+    
+    
+    
+    
     """
-✅ ملخص التغييرات التي أضفتها:
+ ملخص التغييرات :
 التغيير	الموقع
-✅ إضافة update_rating_on_side_effect إلى DrugLibrary	DrugLibrary
-✅ إضافة save إلى SideEffect لتحديث التقييم تلقائياً	SideEffect
-✅ إزالة الكود المعلق لـ Notification (لأنه موجود في تطبيق منفصل)	تم التعليق
-✅ ترتيب الكود وتنظيفه	في كل مكان
+ إضافة update_rating_on_side_effect إلى DrugLibrary	DrugLibrary
+ إضافة save إلى SideEffect لتحديث التقييم تلقائياً	SideEffect
     """

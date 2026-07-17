@@ -61,7 +61,6 @@ class Report(models.Model):
         else:
             return 'ضعيف'
     
-    # ✅ أضف هاتين الدالتين
     def get_missed_medications(self):
         """الحصول على قائمة الأدوية الفائتة من detailed_data"""
         if 'missed_medications' in self.detailed_data:

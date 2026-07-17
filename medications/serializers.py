@@ -40,11 +40,11 @@ class PatientMedicationSerializer(serializers.ModelSerializer):
             'created_at',        # تاريخ الإنشاء (للقراءة فقط)
             'updated_at'         # تاريخ التعديل (للقراءة فقط)
         ]
-        # ✅ هذه الحقول للقراءة فقط (لا يمكن تعديلها عبر API)
+        #  هذه الحقول للقراءة فقط (لا يمكن تعديلها عبر API)
         read_only_fields = [
             'created_at',    # يُملأ تلقائياً عند الإنشاء
             'updated_at',    # يُملأ تلقائياً عند التعديل
-            'patient',       # يمنع تغيير المريض المرتبط بالدواء (يعزز الأمان)
+            #'patient',       # يمنع تغيير المريض المرتبط بالدواء (يعزز الأمان)
             'drug_name'      # مشتق من drug_from_library (للقراءة فقط)
         ]
         
@@ -57,5 +57,5 @@ class PatientMedicationSerializer(serializers.ModelSerializer):
 
 created_at و updated_at ← تُملأ تلقائياً ولا يمكن التلاعب بها
 
-🚀 الآن: هل تريد الانتقال إلى 
+ الآن: هل تريد الانتقال إلى 
         """

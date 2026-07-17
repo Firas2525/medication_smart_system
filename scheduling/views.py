@@ -18,10 +18,10 @@ User = get_user_model()
 # ========== APIs الجدولة الذكية ==========
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def get_patient_schedule(request, patient_id):
     """
-    ✅ الصلاحية: المريض يرى جدوله فقط | الطبيب يرى جدول مرضاه
+     الصلاحية: المريض يرى جدوله فقط | الطبيب يرى جدول مرضاه
     API لعرض جدول جرعات مريض محدد
     
     معلمات اختيارية:
@@ -30,14 +30,14 @@ def get_patient_schedule(request, patient_id):
     """
     current_user = request.user
     
-    # 🔒 المريض: يرى جدوله فقط
+    #  المريض: يرى جدوله فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك رؤية جدول مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يرى جدول مرضاه فقط
+    #  الطبيب: يرى جدول مرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -88,22 +88,22 @@ def get_patient_schedule(request, patient_id):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def today_schedule(request, patient_id):
     """
-    ✅ الصلاحية: المريض يرى جدول اليوم فقط | الطبيب يرى جدول مرضاه
+     الصلاحية: المريض يرى جدول اليوم فقط | الطبيب يرى جدول مرضاه
     API لعرض جدول اليوم للمريض
     """
     current_user = request.user
     
-    # 🔒 المريض: يرى جدول اليوم فقط
+    #  المريض: يرى جدول اليوم فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك رؤية جدول مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يرى جدول مرضاه فقط
+    #  الطبيب: يرى جدول مرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -153,10 +153,10 @@ def today_schedule(request, patient_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def generate_smart_schedule(request):
     """
-    ✅ الصلاحية: المريض يولد جدوله فقط | الطبيب يولد لمرضاه
+     الصلاحية: المريض يولد جدوله فقط | الطبيب يولد لمرضاه
     API لتوليد جدول ذكي للجرعات
     
     البيانات المطلوبة (JSON):
@@ -176,14 +176,14 @@ def generate_smart_schedule(request):
             'message': 'patient_id مطلوب'
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # 🔒 المريض: يولد جدوله فقط
+    #  المريض: يولد جدوله فقط
     if current_user.user_type == 'patient' and current_user.id != patient_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك توليد جدول لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # 🔒 الطبيب: يولد لمرضاه فقط
+    #  الطبيب: يولد لمرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -234,24 +234,24 @@ def generate_smart_schedule(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def mark_as_taken(request, schedule_id):
     """
-    ✅ الصلاحية: المريض يحدد جرعته فقط | الطبيب يحدد لمرضاه
+     الصلاحية: المريض يحدد جرعته فقط | الطبيب يحدد لمرضاه
     API لتسجيل أخذ جرعة
     """
     try:
         schedule = SmartSchedule.objects.get(id=schedule_id)
         current_user = request.user
         
-        # 🔒 المريض: يحدد جرعته فقط
+        #  المريض: يحدد جرعته فقط
         if current_user.user_type == 'patient' and current_user.id != schedule.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك تحديد جرعة مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يحدد لمرضاه فقط
+        #  الطبيب: يحدد لمرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -309,24 +309,24 @@ def mark_as_taken(request, schedule_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])  # ✅ يتطلب تسجيل دخول
+@permission_classes([IsAuthenticated])  #  يتطلب تسجيل دخول
 def postpone_medication(request, schedule_id):
     """
-    ✅ الصلاحية: المريض يؤجل جرعته فقط | الطبيب يؤجل لمرضاه
+     الصلاحية: المريض يؤجل جرعته فقط | الطبيب يؤجل لمرضاه
     API لتأجيل جرعة
     """
     try:
         schedule = SmartSchedule.objects.get(id=schedule_id)
         current_user = request.user
         
-        # 🔒 المريض: يؤجل جرعته فقط
+        #  المريض: يؤجل جرعته فقط
         if current_user.user_type == 'patient' and current_user.id != schedule.patient.id:
             return Response({
                 'status': 'error',
                 'message': 'لا يمكنك تأجيل جرعة مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        # 🔒 الطبيب: يؤجل لمرضاه فقط
+        #  الطبيب: يؤجل لمرضاه فقط
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
@@ -379,10 +379,9 @@ def postpone_medication(request, schedule_id):
     """_
 ملخص التغييرات التي أضفتها:
 التغيير	السطر
-إضافة from accounts.models import UserRelationship	✅
-إضافة @permission_classes([IsAuthenticated]) لكل دوال API	✅
-إضافة current_user = request.user للتحقق من هوية المستخدم	✅
-إضافة صلاحية المريض (يرى/يعدل/يحذف/يؤجل لنفسه فقط)	✅
-إضافة صلاحية الطبيب (يرى/يعدل/يحذف/يؤجل لمرضاه فقط)	✅
-إضافة تعليقات توضيحية (# 🔒) لكل صلاحية	✅
+إضافة from accounts.models import UserRelationship	
+إضافة @permission_classes([IsAuthenticated]) لكل دوال API	
+إضافة current_user = request.user للتحقق من هوية المستخدم	
+إضافة صلاحية المريض (يرى/يعدل/يحذف/يؤجل لنفسه فقط)	
+إضافة صلاحية الطبيب (يرى/يعدل/يحذف/يؤجل لمرضاه فقط)	
     """

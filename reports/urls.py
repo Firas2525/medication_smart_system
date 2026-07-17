@@ -11,7 +11,7 @@ urlpatterns = [
     path('api/statistics/<int:patient_id>/', views.get_adherence_statistics, name='adherence-statistics'),
     path('api/<int:report_id>/delete/', views.delete_report, name='delete-report'),
     
-    # ✅ مسار تحميل التقرير بصيغة PDF
+    #  مسار تحميل التقرير بصيغة PDF
     path('api/<int:report_id>/download/', views.download_report_pdf, name='download-report-pdf'),
 ]
 
@@ -25,5 +25,5 @@ GET	/api/monthly/<patient_id>/	توليد تقرير شهري
 GET	/api/<report_id>/	عرض تفاصيل تقرير
 GET	/api/statistics/<patient_id>/	إحصائيات الالتزام
 DELETE	/api/<report_id>/delete/	حذف تقرير
-GET	/api/<report_id>/download/	✅ تحميل PDF
+GET	/api/<report_id>/download/	 تحميل PDF
     """
