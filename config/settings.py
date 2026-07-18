@@ -151,6 +151,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=60),      #  شهرين (60 يوم)
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=120),     #  4 أشهر (120 يوم)
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=15),      #  شهرين (15 يوم)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),     #  4 أشهر (30 يوم)
 }
