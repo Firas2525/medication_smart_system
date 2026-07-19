@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 from urllib.parse import urlparse
+import socket
 from dotenv import load_dotenv
 
 # Load local .env if present (for local development)
@@ -96,14 +97,29 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     parsed_url = urlparse(DATABASE_URL)
+    # Prefer IPv4 resolution (some hosts resolve to IPv6 which may be unreachable)
+    host = parsed_url.hostname
+    port = parsed_url.port or 5432
+    host_ip = host
+    try:
+        infos = socket.getaddrinfo(host, port, family=socket.AF_INET)
+        if infos:
+            host_ip = infos[0][4][0]
+    except Exception:
+        # fallback to original host if IPv4 resolution fails
+        host_ip = host
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': parsed_url.path.lstrip('/'),
             'USER': parsed_url.username,
             'PASSWORD': parsed_url.password,
-            'HOST': parsed_url.hostname,
+            'HOST': host_ip,
             'PORT': parsed_url.port or '',
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
         }
     }
 else:
