@@ -26,7 +26,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+# Import JWT views optionally to avoid startup error when pkg_resources is missing
+try:
+    from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+    _JWT_AVAILABLE = True
+except Exception:
+    _JWT_AVAILABLE = False
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -35,12 +41,14 @@ urlpatterns = [
     path('scheduling/', include('scheduling.urls')),
     path('notifications/', include('notifications.urls')),
     path('reports/', include('reports.urls')),
-    path('api/', include('api.urls')),# not run
-    path('reports/', include('reports.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
+    path('api/', include('api.urls')),
 ]
+
+if _JWT_AVAILABLE:
+    urlpatterns += [
+        path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+        path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
