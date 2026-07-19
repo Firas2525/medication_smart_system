@@ -161,10 +161,20 @@ AUTH_USER_MODEL = 'accounts.Users'
 
 
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+# Configure REST framework authentication classes optionally.
+# Try to use JWTAuthentication if available; otherwise fall back to SessionAuthentication.
+try:
+    from rest_framework_simplejwt.authentication import JWTAuthentication  # noqa: F401
+    DEFAULT_AUTH_CLASSES = (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    )
+except Exception:
+    DEFAULT_AUTH_CLASSES = (
+        'rest_framework.authentication.SessionAuthentication',
+    )
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': DEFAULT_AUTH_CLASSES,
 }
 
 # ========== إعدادات الوسائط (Media) ==========
