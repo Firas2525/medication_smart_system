@@ -98,13 +98,20 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     parsed_url = urlparse(DATABASE_URL)
     # Prefer IPv4 resolution (some hosts resolve to IPv6 which may be unreachable)
+    # NOTE: Neon uses TLS SNI and requires the hostname (or an endpoint option).
+    # Resolving to a numeric IP breaks SNI and causes an "Endpoint ID is not specified" error.
     host = parsed_url.hostname
     port = parsed_url.port or 5432
     host_ip = host
+
+    # For Neon-managed hosts, keep the hostname (do NOT resolve to an IP).
     try:
-        infos = socket.getaddrinfo(host, port, family=socket.AF_INET)
-        if infos:
-            host_ip = infos[0][4][0]
+        if host and host.endswith('.neon.tech'):
+            host_ip = host
+        else:
+            infos = socket.getaddrinfo(host, port, family=socket.AF_INET)
+            if infos:
+                host_ip = infos[0][4][0]
     except Exception:
         # fallback to original host if IPv4 resolution fails
         host_ip = host
