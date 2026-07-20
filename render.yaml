@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: endproject-web
+    env: python
+    branch: main
+    root: medication_smart_system
+    buildCommand: python -m pip install --upgrade pip setuptools wheel && python -m pip install -r requirements.txt
+    startCommand: python -m waitress --port=$PORT config.wsgi:application
+    releaseCommand: python manage.py migrate && python manage.py collectstatic --noinput
+    # Render should use this exact web service configuration for deployment
