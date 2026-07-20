@@ -33,13 +33,18 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-q3wfq5j&=z%!awgv1+%2y
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
 
 # Hosts
-_raw_allowed_hosts = os.environ.get('ALLOWED_HOSTS', '*').strip()
+_raw_allowed_hosts = os.environ.get('ALLOWED_HOSTS', '').strip()
 if not _raw_allowed_hosts:
     ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = [host.strip() for host in _raw_allowed_hosts.split(',') if host.strip()]
     if not ALLOWED_HOSTS:
         ALLOWED_HOSTS = ['*']
+
+# Add Render's external host automatically when available.
+_render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
 
 
 # Application definition
