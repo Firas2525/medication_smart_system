@@ -241,24 +241,50 @@ def register_patient(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated, IsAdminUser])
 def register_supervisor(request):
-    """تسجيل مشرف جديد (لـ Admin فقط)"""
+    """تسجيل مشرف جديد.
+    
+    إذا لم يكن هناك أي مشرف/أدمن موجود مسبقاً، يسمح بهذا المسار بدون
+    مصادقة حتى يتم إنشاء أول مدير. بعد ذلك تصبح العملية محمية.
+    """
+    has_existing_admin = User.objects.filter(is_staff=True).exists() or User.objects.filter(is_superuser=True).exists()
+
+    if has_existing_admin and not (
+        request.user.is_authenticated and
+        (request.user.is_staff or request.user.is_superuser or request.user.user_type == 'supervisor')
+    ):
+        return Response({
+            'status': 'error',
+            'message': 'يجب تسجيل الدخول كمدير/مشرف لإضافة مدير جديد'
+        }, status=status.HTTP_403_FORBIDDEN)
+
     data = request.data.copy()
     data['user_type'] = 'supervisor'
     data['is_approved'] = True
-    
+
     serializer = UserSerializer(data=data)
     if serializer.is_valid():
         user = serializer.save()
         user.set_password(data['password'])
+        user.is_staff = True
+        user.is_superuser = True
+        user.is_active = True
         user.save()
         return Response({
             'status': 'success',
             'message': 'تم تسجيل المشرف بنجاح',
-            'data': {'id': user.id, 'username': user.username}
-        }, status=201)
-    return Response({'status': 'error', 'errors': serializer.errors}, status=400)
+            'data': {
+                'id': user.id,
+                'username': user.username,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser
+            }
+        }, status=status.HTTP_201_CREATED)
+
+    return Response({
+        'status': 'error',
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT', 'PATCH'])
