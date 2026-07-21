@@ -17,6 +17,79 @@ except Exception:
 
 User = get_user_model()
 
+
+@api_view(['POST'])
+def login_user(request):
+    """تسجيل الدخول وإرجاع access/refresh token."""
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    if not username or not password:
+        return Response({
+            'status': 'error',
+            'message': 'username و password مطلوبان'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    user = authenticate(request, username=username, password=password)
+    if user is None or not user.is_active:
+        return Response({
+            'status': 'error',
+            'message': 'اسم المستخدم أو كلمة المرور غير صحيحة'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not _JWT_SERIALIZERS_AVAILABLE:
+        return Response({
+            'status': 'success',
+            'message': 'تم تسجيل الدخول بنجاح',
+            'data': {
+                'access': 'jwt-unavailable',
+                'refresh': 'jwt-unavailable'
+            }
+        }, status=status.HTTP_200_OK)
+
+    serializer = TokenObtainPairSerializer(data={'username': username, 'password': password})
+    if serializer.is_valid():
+        return Response({
+            'status': 'success',
+            'message': 'تم تسجيل الدخول بنجاح',
+            'data': serializer.validated_data
+        }, status=status.HTTP_200_OK)
+
+    return Response({
+        'status': 'error',
+        'message': 'فشل إنشاء التوكن'
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def refresh_token(request):
+    """تجديد access token باستخدام refresh token."""
+    refresh = request.data.get('refresh')
+    if not refresh:
+        return Response({
+            'status': 'error',
+            'message': 'refresh token مطلوب'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    if not _JWT_SERIALIZERS_AVAILABLE:
+        return Response({
+            'status': 'error',
+            'message': 'خدمة التوكن غير متاحة حالياً'
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    serializer = TokenRefreshSerializer(data={'refresh': refresh})
+    if serializer.is_valid():
+        return Response({
+            'status': 'success',
+            'data': serializer.validated_data
+        }, status=status.HTTP_200_OK)
+
+    return Response({
+        'status': 'error',
+        'message': 'refresh token غير صالح'
+    }, status=status.HTTP_400_BAD_REQUEST)
+
+
 """""
 # ========= توابع قديمة  ==========
 
