@@ -26,6 +26,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from accounts.views import login_user, refresh_token
 
 # Import JWT views optionally to avoid startup error when pkg_resources is missing
 try:
@@ -48,6 +49,11 @@ if _JWT_AVAILABLE:
     urlpatterns += [
         path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
         path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    ]
+else:
+    urlpatterns += [
+        path('api/token/', login_user, name='token_obtain_pair'),
+        path('api/token/refresh/', refresh_token, name='token_refresh'),
     ]
 
 if settings.DEBUG:

@@ -5,9 +5,15 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from accounts.models import UserRelationship 
 from .serializers import UserSerializer
+
+try:
+    from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
+    _JWT_SERIALIZERS_AVAILABLE = True
+except Exception:
+    _JWT_SERIALIZERS_AVAILABLE = False
 
 User = get_user_model()
 
