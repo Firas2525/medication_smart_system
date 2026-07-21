@@ -45,6 +45,11 @@ def login_user(request):
         'status': 'success',
         'message': 'تم تسجيل الدخول بنجاح',
         'data': {
+            'user_id': user.id,
+            'username': user.username,
+            'user_type': user.user_type,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
             'access': access_token,
             'refresh': refresh_token_value
         }
