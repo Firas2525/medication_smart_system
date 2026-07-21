@@ -208,7 +208,9 @@ except Exception:
     )
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': DEFAULT_AUTH_CLASSES,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'accounts.auth.SignedTokenAuthentication',
+    ] + list(DEFAULT_AUTH_CLASSES),
 }
 
 # ========== إعدادات الوسائط (Media) ==========

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import authenticate, get_user_model
 from accounts.models import UserRelationship 
+from .auth import create_access_token, create_refresh_token, decode_signed_token
 from .serializers import UserSerializer
 
 try:
@@ -37,28 +38,17 @@ def login_user(request):
             'message': 'اسم المستخدم أو كلمة المرور غير صحيحة'
         }, status=status.HTTP_401_UNAUTHORIZED)
 
-    if not _JWT_SERIALIZERS_AVAILABLE:
-        return Response({
-            'status': 'success',
-            'message': 'تم تسجيل الدخول بنجاح',
-            'data': {
-                'access': 'jwt-unavailable',
-                'refresh': 'jwt-unavailable'
-            }
-        }, status=status.HTTP_200_OK)
-
-    serializer = TokenObtainPairSerializer(data={'username': username, 'password': password})
-    if serializer.is_valid():
-        return Response({
-            'status': 'success',
-            'message': 'تم تسجيل الدخول بنجاح',
-            'data': serializer.validated_data
-        }, status=status.HTTP_200_OK)
+    access_token = create_access_token(user)
+    refresh_token_value = create_refresh_token(user)
 
     return Response({
-        'status': 'error',
-        'message': 'فشل إنشاء التوكن'
-    }, status=status.HTTP_400_BAD_REQUEST)
+        'status': 'success',
+        'message': 'تم تسجيل الدخول بنجاح',
+        'data': {
+            'access': access_token,
+            'refresh': refresh_token_value
+        }
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -71,23 +61,35 @@ def refresh_token(request):
             'message': 'refresh token مطلوب'
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    if not _JWT_SERIALIZERS_AVAILABLE:
+    try:
+        payload = decode_signed_token(refresh)
+    except Exception:
         return Response({
             'status': 'error',
-            'message': 'خدمة التوكن غير متاحة حالياً'
-        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            'message': 'refresh token غير صالح'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = TokenRefreshSerializer(data={'refresh': refresh})
-    if serializer.is_valid():
+    if payload.get('type') != 'refresh':
         return Response({
-            'status': 'success',
-            'data': serializer.validated_data
-        }, status=status.HTTP_200_OK)
+            'status': 'error',
+            'message': 'refresh token غير صالح'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    user_id = payload.get('user_id')
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'المستخدم غير موجود'
+        }, status=status.HTTP_404_NOT_FOUND)
 
     return Response({
-        'status': 'error',
-        'message': 'refresh token غير صالح'
-    }, status=status.HTTP_400_BAD_REQUEST)
+        'status': 'success',
+        'data': {
+            'access': create_access_token(user)
+        }
+    }, status=status.HTTP_200_OK)
 
 
 """""
