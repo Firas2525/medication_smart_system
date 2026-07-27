@@ -200,7 +200,22 @@ Authorization: Bearer <access_token>
 - Body: نفس نمط تسجيل المريض لكن `user_type` يصبح `supervisor`.
 - رد نجاح مشابه.
 
-#### 2.1.9 PUT/PATCH /accounts/api/users/<user_id>/update/
+#### 2.1.9 GET /accounts/api/patients/all/
+- الوصف: عرض جميع المرضى.
+- الصلاحيات: مسؤول (`IsAuthenticated` و`IsAdminUser`).
+- Body: لا يوجد.
+- رد نجاح (200):
+  ```json
+  {
+    "status": "success",
+    "count": 2,
+    "data": [
+      { "id": 7, "username": "patient_test", "user_type": "patient" }
+    ]
+  }
+  ```
+
+#### 2.1.10 PUT/PATCH /accounts/api/users/<user_id>/update/
 - الوصف: تحديث بيانات مستخدم.
 - الصلاحيات: مستخدم مسجل أو مسؤول؛ المستخدم لا يمكنه تعديل بيانات شخص آخر.
 - Body: JSON يحوي أي من حقول المستخدم التالية:
@@ -652,6 +667,7 @@ Authorization: Bearer <access_token>
 | Accounts | /accounts/api/doctors/<doctor_id>/status/ | GET | حالة طلب الطبيب |
 | Accounts | /accounts/api/register/patient/ | POST | تسجيل مريض |
 | Accounts | /accounts/api/register/supervisor/ | POST | تسجيل مشرف |
+| Accounts | /accounts/api/patients/all/ | GET | عرض جميع المرضى |
 | Accounts | /accounts/api/users/<user_id>/update/ | PUT/PATCH | تحديث مستخدم |
 | Accounts | /accounts/api/users/<user_id>/delete/ | DELETE | حذف مستخدم |
 | Accounts | /accounts/api/users/<user_id>/profile/ | GET | ملف المستخدم |

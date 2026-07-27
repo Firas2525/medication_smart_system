@@ -7,9 +7,10 @@ urlpatterns = [
     # تسجيل طبيب جديد
     path('api/register/doctor/', views.register_doctor, name='register-doctor'),
     
-    # عرض الأطباء (لـ Admin)
+    # عرض الأطباء والمرضى (لـ Admin)
     path('api/doctors/pending/', views.get_pending_doctors, name='pending-doctors'),
     path('api/doctors/all/', views.get_all_doctors, name='all-doctors'),
+    path('api/patients/all/', views.get_all_patients, name='all-patients'),
     
     # الموافقة على طبيب أو رفضه
     path('api/doctors/<int:doctor_id>/approve/', views.approve_doctor, name='approve-doctor'),

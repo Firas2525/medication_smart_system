@@ -210,6 +210,23 @@ def get_all_doctors(request):
     }, status=status.HTTP_200_OK)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def get_all_patients(request):
+    """
+    API لعرض جميع المرضى (لـ Admin فقط)
+    طريقة الاستخدام: GET /accounts/api/patients/all/
+    """
+    patients = User.objects.filter(user_type='patient')
+    serializer = UserSerializer(patients, many=True)
+
+    return Response({
+        'status': 'success',
+        'count': patients.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def approve_doctor(request, doctor_id):
