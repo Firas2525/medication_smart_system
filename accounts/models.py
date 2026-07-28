@@ -50,8 +50,8 @@ class Users(AbstractUser):#توسيع نموذج المستخدم الافترا
     updated_at = models.DateTimeField(auto_now=True)
     
     
-    license_image_url = models.URLField(max_length=500, blank=True, null=True, 
-                                        verbose_name="رابط صورة الشهادة")
+    license_image_url = models.CharField(max_length=500, blank=True, null=True, 
+                                         verbose_name="رابط أو اسم صورة الشهادة")
     is_approved = models.BooleanField(default=False, 
                                       verbose_name="تم الموافقة عليه")
     # accounts/models.py - داخل class Users

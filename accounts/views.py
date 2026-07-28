@@ -141,12 +141,9 @@ def register_doctor(request):
     data['user_type'] = 'doctor'
     data['is_approved'] = False  # يحتاج موافقة Admin
     
-    # التحقق من وجود رابط الشهادة للأطباء
+    # السماح بإرسال رابط فعلي أو اسم ملف/مسار بسيط للشهادة
     if not data.get('license_image_url'):
-        return Response({
-            'status': 'error',
-            'message': 'رابط صورة الشهادة مطلوب للأطباء'
-        }, status=status.HTTP_400_BAD_REQUEST)
+        data['license_image_url'] = ''
     
     serializer = UserSerializer(data=data)
     

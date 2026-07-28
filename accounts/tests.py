@@ -48,3 +48,19 @@ class PatientListAPITests(TestCase):
         self.assertIn('patient_two', usernames)
         self.assertNotIn('doctor_one', usernames)
 
+    def test_doctor_registration_accepts_plain_filename(self):
+        response = self.client.post('/accounts/api/register/doctor/', {
+            'username': 'doctor_plain',
+            'email': 'doctor_plain@example.com',
+            'password': '123456',
+            'first_name': 'أحمد',
+            'last_name': 'محمد',
+            'phone_number': '0500000000',
+            'specialization': 'قلب',
+            'license_number': '12345',
+            'license_image_url': 'certificate.jpg',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['status'], 'success')
+
