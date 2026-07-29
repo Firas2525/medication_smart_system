@@ -8,7 +8,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate, get_user_model
 from accounts.models import UserRelationship 
 from .auth import create_access_token, create_refresh_token, decode_signed_token
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserRelationshipSerializer
 
 try:
     from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
@@ -220,6 +220,84 @@ def get_all_patients(request):
     return Response({
         'status': 'success',
         'count': patients.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_available_doctors_for_patient(request):
+    """عرض الأطباء الموافق عليهم لمريض"""
+    doctors = User.objects.filter(user_type='doctor', is_approved=True, is_active=True)
+    serializer = UserSerializer(doctors, many=True)
+    return Response({
+        'status': 'success',
+        'count': doctors.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def select_doctor_for_patient(request, doctor_id):
+    """اختيار طبيب من قبل المريض"""
+    current_user = request.user
+    if current_user.user_type != 'patient':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
+
+    try:
+        doctor = User.objects.get(id=doctor_id, user_type='doctor', is_approved=True, is_active=True)
+    except User.DoesNotExist:
+        return Response({'status': 'error', 'message': 'الطبيب غير موجود'}, status=404)
+
+    relationship, created = UserRelationship.objects.get_or_create(
+        doctor=doctor,
+        patient=current_user,
+        relationship_type='doctor_patient',
+        defaults={'status': 'active'}
+    )
+    if not created:
+        relationship.status = 'active'
+        relationship.save()
+
+    serializer = UserRelationshipSerializer(relationship)
+    return Response({
+        'status': 'success',
+        'message': 'تم اختيار الطبيب بنجاح',
+        'data': serializer.data
+    }, status=201 if created else 200)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_patient_doctors(request):
+    """عرض الأطباء المختارين من قبل المريض"""
+    current_user = request.user
+    if current_user.user_type != 'patient':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
+
+    relationships = UserRelationship.objects.filter(patient=current_user, relationship_type='doctor_patient').order_by('-created_at')
+    serializer = UserRelationshipSerializer(relationships, many=True)
+    return Response({
+        'status': 'success',
+        'count': relationships.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_doctor_patients(request):
+    """عرض المرضى الذين يشرف عليهم الطبيب"""
+    current_user = request.user
+    if current_user.user_type != 'doctor':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للطبيب فقط'}, status=403)
+
+    relationships = UserRelationship.objects.filter(doctor=current_user, relationship_type='doctor_patient', status='active').order_by('-created_at')
+    serializer = UserRelationshipSerializer(relationships, many=True)
+    return Response({
+        'status': 'success',
+        'count': relationships.count(),
         'data': serializer.data
     }, status=status.HTTP_200_OK)
 

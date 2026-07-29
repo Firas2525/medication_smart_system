@@ -11,6 +11,12 @@ urlpatterns = [
     path('api/doctors/pending/', views.get_pending_doctors, name='pending-doctors'),
     path('api/doctors/all/', views.get_all_doctors, name='all-doctors'),
     path('api/patients/all/', views.get_all_patients, name='all-patients'),
+
+    # العلاقات بين المريض والطبيب
+    path('api/patient/doctors/available/', views.get_available_doctors_for_patient, name='patient-available-doctors'),
+    path('api/patient/doctors/select/<int:doctor_id>/', views.select_doctor_for_patient, name='patient-select-doctor'),
+    path('api/patient/doctors/', views.get_patient_doctors, name='patient-doctors'),
+    path('api/doctor/patients/', views.get_doctor_patients, name='doctor-patients'),
     
     # الموافقة على طبيب أو رفضه
     path('api/doctors/<int:doctor_id>/approve/', views.approve_doctor, name='approve-doctor'),

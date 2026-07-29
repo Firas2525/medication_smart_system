@@ -1,6 +1,7 @@
 # accounts/serializers.py
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from .models import UserRelationship
 
 User = get_user_model()
 
@@ -21,3 +22,15 @@ class UserSerializer(serializers.ModelSerializer):
         if not isinstance(value, str):
             raise serializers.ValidationError('يجب أن يكون نصاً')
         return value.strip()
+
+
+class UserRelationshipSerializer(serializers.ModelSerializer):
+    doctor = UserSerializer(read_only=True)
+    patient = UserSerializer(read_only=True)
+
+    class Meta:
+        model = UserRelationship
+        fields = ['id', 'doctor', 'patient', 'relationship_type', 'status',
+                  'can_view_medications', 'can_receive_alerts', 'can_view_reports',
+                  'can_make_medical_decisions', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'doctor', 'patient', 'created_at', 'updated_at']
