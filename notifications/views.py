@@ -45,7 +45,7 @@ def get_user_notifications(request, user_id):
         # فلترة حسب الحالة إن وجدت
         status_filter = request.GET.get('status')
         if status_filter == 'unread':
-            notifications = notifications.filter(status='sent')
+            notifications = notifications.filter(status__in=['pending', 'sent'])
         elif status_filter == 'read':
             notifications = notifications.filter(status='read')
         elif status_filter == 'delivered':
@@ -60,7 +60,7 @@ def get_user_notifications(request, user_id):
         
         # إحصائيات
         total = Notification.objects.filter(user=user).count()
-        unread = Notification.objects.filter(user=user, status='sent').count()
+        unread = Notification.objects.filter(user=user, status__in=['pending', 'sent']).count()
         delivered = Notification.objects.filter(user=user, status='delivered').count()
         read_count = Notification.objects.filter(user=user, status='read').count()
         
