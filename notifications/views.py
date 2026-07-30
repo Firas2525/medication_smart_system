@@ -104,8 +104,8 @@ def get_unread_notifications(request, user_id):
         user = User.objects.get(id=user_id)
         
         notifications = Notification.objects.filter(
-            user=user, 
-            status='sent'
+            user=user,
+            status__in=['pending', 'sent']
         ).order_by('-created_at')
         
         serializer = NotificationSerializer(notifications, many=True)
