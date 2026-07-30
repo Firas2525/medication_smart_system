@@ -277,7 +277,8 @@ def mark_as_taken(request, schedule_id):
         
         taken_at_str = request.data.get('taken_at')
         if taken_at_str:
-            schedule.taken_at = datetime.strptime(taken_at_str, '%Y-%m-%dT%H:%M:%S')
+            naive_taken_at = datetime.strptime(taken_at_str, '%Y-%m-%dT%H:%M:%S')
+            schedule.taken_at = timezone.make_aware(naive_taken_at)
         else:
             schedule.taken_at = timezone.now()
         
