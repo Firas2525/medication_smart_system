@@ -37,11 +37,13 @@ def get_patient_schedule(request, patient_id):
             'message': 'لا يمكنك رؤية جدول مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يرى جدول مرضاه فقط
-    if current_user.user_type == 'doctor':
+    #  الطبيب/الممرض: يرى جدول مرضاهما فقط
+    if current_user.user_type in ['doctor', 'nurse']:
+        relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient_id,
+            relationship_type=relationship_type,
             status='active'
         ).exists()
         if not is_related:
@@ -103,11 +105,13 @@ def today_schedule(request, patient_id):
             'message': 'لا يمكنك رؤية جدول مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يرى جدول مرضاه فقط
-    if current_user.user_type == 'doctor':
+    #  الطبيب/الممرض: يرى جدول اليوم فقط
+    if current_user.user_type in ['doctor', 'nurse']:
+        relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient_id,
+            relationship_type=relationship_type,
             status='active'
         ).exists()
         if not is_related:
@@ -183,13 +187,24 @@ def generate_smart_schedule(request):
             'message': 'لا يمكنك توليد جدول لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يولد لمرضاه فقط
+    #  الطبيب/الممرض: لا يسمح للممرض بالكتابة هنا
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient_id,
+            relationship_type='doctor_patient',
             status='active'
         ).exists()
+        if not is_related:
+            return Response({
+                'status': 'error',
+                'message': 'هذا المريض ليس من مرضاك'
+            }, status=status.HTTP_403_FORBIDDEN)
+    elif current_user.user_type == 'nurse':
+        return Response({
+            'status': 'error',
+            'message': 'لا يمكن للممرض إنشاء جدول أو تعديل الجرعات'
+        }, status=status.HTTP_403_FORBIDDEN)
         if not is_related:
             return Response({
                 'status': 'error',
@@ -251,13 +266,24 @@ def mark_as_taken(request, schedule_id):
                 'message': 'لا يمكنك تحديد جرعة مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        #  الطبيب: يحدد لمرضاه فقط
+        #  الطبيب/الممرض: لا يسمح للممرض بالكتابة هنا
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
                 patient_id=schedule.patient.id,
+                relationship_type='doctor_patient',
                 status='active'
             ).exists()
+            if not is_related:
+                return Response({
+                    'status': 'error',
+                    'message': 'هذا المريض ليس من مرضاك'
+                }, status=status.HTTP_403_FORBIDDEN)
+        elif current_user.user_type == 'nurse':
+            return Response({
+                'status': 'error',
+                'message': 'لا يمكن للممرض تسجيل أو تعديل الجرعات'
+            }, status=status.HTTP_403_FORBIDDEN)
             if not is_related:
                 return Response({
                     'status': 'error',
@@ -327,13 +353,24 @@ def postpone_medication(request, schedule_id):
                 'message': 'لا يمكنك تأجيل جرعة مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        #  الطبيب: يؤجل لمرضاه فقط
+        #  الطبيب/الممرض: لا يسمح للممرض بالكتابة هنا
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
                 patient_id=schedule.patient.id,
+                relationship_type='doctor_patient',
                 status='active'
             ).exists()
+            if not is_related:
+                return Response({
+                    'status': 'error',
+                    'message': 'هذا المريض ليس من مرضاك'
+                }, status=status.HTTP_403_FORBIDDEN)
+        elif current_user.user_type == 'nurse':
+            return Response({
+                'status': 'error',
+                'message': 'لا يمكن للممرض تسجيل أو تعديل الجرعات'
+            }, status=status.HTTP_403_FORBIDDEN)
             if not is_related:
                 return Response({
                     'status': 'error',

@@ -32,13 +32,20 @@ class ReportGenerator:
         self.patient = patient
 
     def get_patient_doctors_and_supervisors(self):
-        """جلب الأطباء والمشرفين المرتبطين بالمريض"""
+        """جلب الأطباء والممرضين والمشرفين المرتبطين بالمريض"""
         from accounts.models import UserRelationship
         
         # جلب الأطباء
         doctors = UserRelationship.objects.filter(
             patient=self.patient,
             relationship_type='doctor_patient',
+            status='active'
+        ).select_related('doctor')
+
+        # جلب الممرضين
+        nurses = UserRelationship.objects.filter(
+            patient=self.patient,
+            relationship_type='nurse_patient',
             status='active'
         ).select_related('doctor')
         
@@ -51,6 +58,7 @@ class ReportGenerator:
         
         return {
             'doctors': [rel.doctor for rel in doctors],
+            'nurses': [rel.doctor for rel in nurses],
             'supervisors': [rel.doctor for rel in supervisors]
         }
 
@@ -109,7 +117,26 @@ class ReportGenerator:
                 }
             )
         
-        #  3. إرسال للمشرفين
+        #  3. إرسال للممرضين
+        for nurse in contacts['nurses']:
+            Notification.objects.create(
+                user=nurse,
+                schedule=None,
+                notification_type='report_ready',
+                title=f"{title} - المريض {self.patient.get_full_name()}",
+                message=message,
+                channel='in_app',
+                status='pending',
+                scheduled_for=timezone.now(),
+                metadata={
+                    'report_id': report.id,
+                    'patient_id': self.patient.id,
+                    'report_type': report.report_type,
+                    'recipient_type': 'nurse'
+                }
+            )
+        
+        #  4. إرسال للمشرفين
         for supervisor in contacts['supervisors']:
             Notification.objects.create(
                 user=supervisor,
@@ -128,7 +155,7 @@ class ReportGenerator:
                 }
             )
         
-        total_count = 1 + len(contacts['doctors']) + len(contacts['supervisors'])
+        total_count = 1 + len(contacts['doctors']) + len(contacts['nurses']) + len(contacts['supervisors'])
         return total_count
 
     def generate_weekly_report(self, end_date=None):

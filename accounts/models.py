@@ -7,6 +7,7 @@ class Users(AbstractUser):#توسيع نموذج المستخدم الافترا
     USER_TYPES = (#choices هي قائمة محددة مسبقاً من الخيارات التي يمكن للمستخدم اختيار منها، بدلاً من كتابة أي قيمة عشوائية.
         ('patient', 'مريض'),
         ('doctor', 'طبيب'),
+        ('nurse', 'ممرض'),
         ('supervisor', 'مشرف'),
         
     )
@@ -78,18 +79,21 @@ class Users(AbstractUser):#توسيع نموذج المستخدم الافترا
     def is_doctor(self):
         return self.user_type == 'doctor'
 
+    def is_nurse(self):
+        return self.user_type == 'nurse'
+
     def is_supervisor(self):
         return self.user_type == 'supervisor'
 
 class UserRelationship(models.Model):
     RELATIONSHIP_TYPES = (
         ('doctor_patient', 'طبيب - مريض'),
+        ('nurse_patient', 'ممرض - مريض'),
         ('supervisor_patient', 'مشرف - مريض'),
         ('companion_patient', 'مرافق - مريض'),
     )
     doctor = models.ForeignKey(Users, on_delete=models.CASCADE, 
-                              related_name='doctor_relationships', 
-                              limit_choices_to={'user_type': 'doctor'})
+                              related_name='doctor_relationships')
     patient = models.ForeignKey(Users, on_delete=models.CASCADE, 
                                related_name='patient_relationships',
                                limit_choices_to={'user_type': 'patient'})

@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate, get_user_model
 from accounts.models import UserRelationship 
 from .auth import create_access_token, create_refresh_token, decode_signed_token
 from .serializers import UserSerializer, UserRelationshipSerializer
+from .permissions import can_access_patient
 
 try:
     from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
@@ -117,6 +118,40 @@ def relationships(request):
 
 """
 # ==========  API الجديدة ==========
+
+@api_view(['POST'])
+def register_nurse(request):
+    """API لتسجيل ممرض جديد"""
+    data = request.data.copy()
+    data['user_type'] = 'nurse'
+    data['is_approved'] = False
+
+    if not data.get('license_image_url'):
+        data['license_image_url'] = ''
+
+    serializer = UserSerializer(data=data)
+    if serializer.is_valid():
+        user = serializer.save()
+        user.set_password(data['password'])
+        user.save()
+
+        return Response({
+            'status': 'success',
+            'message': 'تم تسجيل الممرض بنجاح. سيتم مراجعة طلبك من قبل الإدارة.',
+            'data': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_approved': user.is_approved
+            }
+        }, status=status.HTTP_201_CREATED)
+
+    return Response({
+        'status': 'error',
+        'message': 'بيانات غير صالحة',
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 def register_doctor(request):
@@ -237,6 +272,19 @@ def get_available_doctors_for_patient(request):
     }, status=status.HTTP_200_OK)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_available_nurses_for_patient(request):
+    """عرض الممرضين الموافق عليهم لمريض"""
+    nurses = User.objects.filter(user_type='nurse', is_approved=True, is_active=True)
+    serializer = UserSerializer(nurses, many=True)
+    return Response({
+        'status': 'success',
+        'count': nurses.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def select_doctor_for_patient(request, doctor_id):
@@ -268,6 +316,37 @@ def select_doctor_for_patient(request, doctor_id):
     }, status=201 if created else 200)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def select_nurse_for_patient(request, nurse_id):
+    """اختيار ممرض من قبل المريض"""
+    current_user = request.user
+    if current_user.user_type != 'patient':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
+
+    try:
+        nurse = User.objects.get(id=nurse_id, user_type='nurse', is_approved=True, is_active=True)
+    except User.DoesNotExist:
+        return Response({'status': 'error', 'message': 'الممرض غير موجود'}, status=404)
+
+    relationship, created = UserRelationship.objects.get_or_create(
+        doctor=nurse,
+        patient=current_user,
+        relationship_type='nurse_patient',
+        defaults={'status': 'active'}
+    )
+    if not created:
+        relationship.status = 'active'
+        relationship.save()
+
+    serializer = UserRelationshipSerializer(relationship)
+    return Response({
+        'status': 'success',
+        'message': 'تم اختيار الممرض بنجاح',
+        'data': serializer.data
+    }, status=201 if created else 200)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_patient_doctors(request):
@@ -287,6 +366,23 @@ def get_patient_doctors(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def get_patient_nurses(request):
+    """عرض الممرضين المختارين من قبل المريض"""
+    current_user = request.user
+    if current_user.user_type != 'patient':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
+
+    relationships = UserRelationship.objects.filter(patient=current_user, relationship_type='nurse_patient').order_by('-created_at')
+    serializer = UserRelationshipSerializer(relationships, many=True)
+    return Response({
+        'status': 'success',
+        'count': relationships.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_doctor_patients(request):
     """عرض المرضى الذين يشرف عليهم الطبيب"""
     current_user = request.user
@@ -294,6 +390,23 @@ def get_doctor_patients(request):
         return Response({'status': 'error', 'message': 'هذا الإجراء للطبيب فقط'}, status=403)
 
     relationships = UserRelationship.objects.filter(doctor=current_user, relationship_type='doctor_patient', status='active').order_by('-created_at')
+    serializer = UserRelationshipSerializer(relationships, many=True)
+    return Response({
+        'status': 'success',
+        'count': relationships.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_nurse_patients(request):
+    """عرض المرضى الذين يشرف عليهم الممرض"""
+    current_user = request.user
+    if current_user.user_type != 'nurse':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للممرض فقط'}, status=403)
+
+    relationships = UserRelationship.objects.filter(doctor=current_user, relationship_type='nurse_patient', status='active').order_by('-created_at')
     serializer = UserRelationshipSerializer(relationships, many=True)
     return Response({
         'status': 'success',

@@ -37,11 +37,13 @@ def get_patient_reports(request, patient_id):
             'message': 'لا يمكنك رؤية تقارير مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يرى تقارير مرضاه فقط
-    if current_user.user_type == 'doctor':
+    #  الطبيب/الممرض: يرى تقارير مرضاهما فقط
+    if current_user.user_type in ['doctor', 'nurse']:
+        relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient_id,
+            relationship_type=relationship_type,
             status='active'
         ).exists()
         if not is_related:
@@ -90,11 +92,13 @@ def generate_weekly_report(request, patient_id):
             'message': 'لا يمكنك توليد تقرير لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يولد تقارير مرضاه فقط
-    if current_user.user_type == 'doctor':
+    #  الطبيب/الممرض: يولد تقارير مرضاهما فقط
+    if current_user.user_type in ['doctor', 'nurse']:
+        relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient_id,
+            relationship_type=relationship_type,
             status='active'
         ).exists()
         if not is_related:
@@ -149,11 +153,13 @@ def generate_monthly_report(request, patient_id):
             'message': 'لا يمكنك توليد تقرير لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يولد تقارير مرضاه فقط
-    if current_user.user_type == 'doctor':
+    #  الطبيب/الممرض: يولد تقارير مرضاهما فقط
+    if current_user.user_type in ['doctor', 'nurse']:
+        relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient_id,
+            relationship_type=relationship_type,
             status='active'
         ).exists()
         if not is_related:
@@ -207,11 +213,13 @@ def get_report_detail(request, report_id):
                 'message': 'لا يمكنك رؤية تقرير مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        #  الطبيب: يرى تقارير مرضاه فقط
-        if current_user.user_type == 'doctor':
+        #  الطبيب/الممرض: يرى تقارير مرضاهما فقط
+        if current_user.user_type in ['doctor', 'nurse']:
+            relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
                 patient_id=report.patient.id,
+                relationship_type=relationship_type,
                 status='active'
             ).exists()
             if not is_related:

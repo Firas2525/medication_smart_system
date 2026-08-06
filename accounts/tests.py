@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
+from accounts.models import UserRelationship
 
 User = get_user_model()
 
@@ -63,4 +64,50 @@ class PatientListAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['status'], 'success')
+
+    def test_nurse_can_view_linked_patient_medications(self):
+        nurse = User.objects.create_user(
+            username='nurse_one',
+            password='123456',
+            user_type='nurse',
+            is_approved=True,
+        )
+        UserRelationship.objects.create(
+            doctor=nurse,
+            patient=self.patient_one,
+            relationship_type='nurse_patient',
+            status='active',
+        )
+
+        self.client.force_authenticate(user=nurse)
+        response = self.client.get(f'/medications/api/patient-medications/{self.patient_one.id}/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_nurse_cannot_add_medication_to_patient(self):
+        nurse = User.objects.create_user(
+            username='nurse_two',
+            password='123456',
+            user_type='nurse',
+            is_approved=True,
+        )
+        UserRelationship.objects.create(
+            doctor=nurse,
+            patient=self.patient_one,
+            relationship_type='nurse_patient',
+            status='active',
+        )
+
+        self.client.force_authenticate(user=nurse)
+        response = self.client.post('/medications/api/patient-medications/add/', {
+            'patient': self.patient_one.id,
+            'drug_from_library': 1,
+            'name': 'Test Drug',
+            'dosage': '1',
+            'frequency': 1,
+            'relation_to_meal': 'after_meal',
+            'start_date': '2026-08-06',
+        }, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 

@@ -4,19 +4,24 @@ from . import views
 
 urlpatterns = [
     # ========== مسارات API  ==========
-    # تسجيل طبيب جديد
+    # تسجيل طبيب وممرض جديد
     path('api/register/doctor/', views.register_doctor, name='register-doctor'),
+    path('api/register/nurse/', views.register_nurse, name='register-nurse'),
     
     # عرض الأطباء والمرضى (لـ Admin)
     path('api/doctors/pending/', views.get_pending_doctors, name='pending-doctors'),
     path('api/doctors/all/', views.get_all_doctors, name='all-doctors'),
     path('api/patients/all/', views.get_all_patients, name='all-patients'),
 
-    # العلاقات بين المريض والطبيب
+    # العلاقات بين المريض والطبيب والممرض
     path('api/patient/doctors/available/', views.get_available_doctors_for_patient, name='patient-available-doctors'),
+    path('api/patient/nurses/available/', views.get_available_nurses_for_patient, name='patient-available-nurses'),
     path('api/patient/doctors/select/<int:doctor_id>/', views.select_doctor_for_patient, name='patient-select-doctor'),
+    path('api/patient/nurses/select/<int:nurse_id>/', views.select_nurse_for_patient, name='patient-select-nurse'),
     path('api/patient/doctors/', views.get_patient_doctors, name='patient-doctors'),
+    path('api/patient/nurses/', views.get_patient_nurses, name='patient-nurses'),
     path('api/doctor/patients/', views.get_doctor_patients, name='doctor-patients'),
+    path('api/nurse/patients/', views.get_nurse_patients, name='nurse-patients'),
     
     # الموافقة على طبيب أو رفضه
     path('api/doctors/<int:doctor_id>/approve/', views.approve_doctor, name='approve-doctor'),

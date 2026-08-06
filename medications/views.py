@@ -154,11 +154,13 @@ def patient_medications_list(request, patient_id):
             'message': 'لا يمكنك رؤية أدوية مريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يرى مرضاه فقط
-    if current_user.user_type == 'doctor':
+    #  الطبيب/الممرض: يرى مرضاهما فقط
+    if current_user.user_type in ['doctor', 'nurse']:
+        relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient_id,
+            relationship_type=relationship_type,
             status='active'
         ).exists()
         if not is_related:
@@ -216,11 +218,12 @@ def add_patient_medication_api(request):
             'message': 'لا يمكنك إضافة دواء لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب: يضيف لمرضاه فقط
+    #  الطبيب/الممرض: لا يسمح للممرض بالكتابة
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
             patient_id=patient.id,
+            relationship_type='doctor_patient',
             status='active'
         ).exists()
         if not is_related:
@@ -228,6 +231,11 @@ def add_patient_medication_api(request):
                 'status': 'error',
                 'message': 'هذا المريض ليس من مرضاك'
             }, status=status.HTTP_403_FORBIDDEN)
+    elif current_user.user_type == 'nurse':
+        return Response({
+            'status': 'error',
+            'message': 'لا يمكن للممرض إضافة أو تعديل الأدوية'
+        }, status=status.HTTP_403_FORBIDDEN)
     
     # التحقق من وجود الدواء في المكتبة
     try:
@@ -273,11 +281,12 @@ def update_patient_medication_api(request, medication_id):
                 'message': 'لا يمكنك تعديل دواء مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        #  الطبيب: يعدل لمرضاه فقط
+        #  الطبيب/الممرض: لا يسمح للممرض بالكتابة
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
                 patient_id=medication.patient.id,
+                relationship_type='doctor_patient',
                 status='active'
             ).exists()
             if not is_related:
@@ -285,6 +294,11 @@ def update_patient_medication_api(request, medication_id):
                     'status': 'error',
                     'message': 'هذا المريض ليس من مرضاك'
                 }, status=status.HTTP_403_FORBIDDEN)
+        elif current_user.user_type == 'nurse':
+            return Response({
+                'status': 'error',
+                'message': 'لا يمكن للممرض إضافة أو تعديل الأدوية'
+            }, status=status.HTTP_403_FORBIDDEN)
         
         serializer = PatientMedicationSerializer(medication, data=request.data, partial=True)
         
@@ -327,11 +341,12 @@ def delete_patient_medication_api(request, medication_id):
                 'message': 'لا يمكنك حذف دواء مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        #  الطبيب: يحذف لمرضاه فقط
+        #  الطبيب/الممرض: لا يسمح للممرض بالكتابة
         if current_user.user_type == 'doctor':
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
                 patient_id=medication.patient.id,
+                relationship_type='doctor_patient',
                 status='active'
             ).exists()
             if not is_related:
@@ -339,6 +354,11 @@ def delete_patient_medication_api(request, medication_id):
                     'status': 'error',
                     'message': 'هذا المريض ليس من مرضاك'
                 }, status=status.HTTP_403_FORBIDDEN)
+        elif current_user.user_type == 'nurse':
+            return Response({
+                'status': 'error',
+                'message': 'لا يمكن للممرض إضافة أو تعديل الأدوية'
+            }, status=status.HTTP_403_FORBIDDEN)
         
         medication.is_active = False
         medication.save()
@@ -373,11 +393,13 @@ def patient_medication_detail_api(request, medication_id):
                 'message': 'لا يمكنك رؤية دواء مريض آخر'
             }, status=status.HTTP_403_FORBIDDEN)
         
-        #  الطبيب: يرى تفاصيل مرضاه فقط
-        if current_user.user_type == 'doctor':
+        #  الطبيب/الممرض: يرى تفاصيل مرضاهما فقط
+        if current_user.user_type in ['doctor', 'nurse']:
+            relationship_type = 'doctor_patient' if current_user.user_type == 'doctor' else 'nurse_patient'
             is_related = UserRelationship.objects.filter(
                 doctor=current_user,
                 patient_id=medication.patient.id,
+                relationship_type=relationship_type,
                 status='active'
             ).exists()
             if not is_related:
