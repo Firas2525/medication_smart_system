@@ -51,8 +51,17 @@ def login_user(request):
             'user_type': user.user_type,
             'is_staff': user.is_staff,
             'is_superuser': user.is_superuser,
-                'is_approved': user.is_approved,
-                'approval_status': 'approved' if user.is_approved else 'pending',
+            'is_approved': user.is_approved,
+            'approval_status': 'approved' if user.is_approved else 'pending',
+            'access': access_token,
+            'refresh': refresh_token_value
+        }
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def refresh_token(request):
+    """تجديد access token باستخدام refresh token."""
     refresh = request.data.get('refresh')
     if not refresh:
         return Response({
