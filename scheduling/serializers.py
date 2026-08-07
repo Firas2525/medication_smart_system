@@ -10,6 +10,7 @@ class SmartScheduleSerializer(serializers.ModelSerializer):
     patient_name = serializers.CharField(source='patient.get_full_name', read_only=True)
     is_critical_display = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
+    doctor_decision_display = serializers.SerializerMethodField()
     
     class Meta:
         model = SmartSchedule
@@ -31,6 +32,9 @@ class SmartScheduleSerializer(serializers.ModelSerializer):
             'delay_minutes',        # دقائق التأخير
             'is_critical',          # هل هي حرجة؟
             'is_critical_display',  # نص الحرجة (مشتق)
+            'doctor_decision',      # قرار الطبيب
+            'doctor_decision_display',  # نص قرار الطبيب (مشتق)
+            'doctor_decision_at',   # وقت قرار الطبيب
             'reminder_sent',        # هل تم إرسال التذكير؟
             'notes'                 # ملاحظات
         ]
@@ -43,7 +47,9 @@ class SmartScheduleSerializer(serializers.ModelSerializer):
             'medication_name',      # مشتق من medication (للقراءة فقط)
             'patient_name',         # مشتق من patient (للقراءة فقط)
             'status_display',       # مشتق من status (للقراءة فقط)
-            'is_critical_display'   # مشتق من is_critical (للقراءة فقط)
+            'is_critical_display',  # مشتق من is_critical (للقراءة فقط)
+            'doctor_decision_display',  # نص قرار الطبيب (للقراءة فقط)
+            'doctor_decision_at'    # وقت قرار الطبيب (للقراءة فقط)
         ]
     
     def get_is_critical_display(self, obj):
@@ -60,6 +66,16 @@ class SmartScheduleSerializer(serializers.ModelSerializer):
             'skipped': 'متخطاة',
         }
         return status_map.get(obj.status, obj.status)
+
+    def get_doctor_decision_display(self, obj):
+        """إرجاع نص قرار الطبيب بالعربية"""
+        decision_map = {
+            'double_next': 'مضاعفة الجرعة القادمة',
+            'skip': 'تخطي الجرعة',
+            'take_later': 'أخذها لاحقاً',
+            'reschedule': 'إعادة جدولتها',
+        }
+        return decision_map.get(obj.doctor_decision, None)
     
     
     

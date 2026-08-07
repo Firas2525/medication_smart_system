@@ -8,5 +8,7 @@ urlpatterns = [
     path('api/generate/', views.generate_smart_schedule, name='generate-smart-schedule'),
     path('api/mark-taken/<int:schedule_id>/', views.mark_as_taken, name='mark-as-taken'),
     path('api/postpone/<int:schedule_id>/', views.postpone_medication, name='postpone-medication'),
+    path('api/mark-missed/<int:schedule_id>/', views.mark_as_missed_by_doctor, name='mark-as-missed-by-doctor'),
+    path('api/double-next/<int:schedule_id>/', views.double_next_dose, name='double-next-dose'),
     path('api/today/<int:patient_id>/', views.today_schedule, name='today-schedule'),
 ]

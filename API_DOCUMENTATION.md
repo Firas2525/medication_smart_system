@@ -518,6 +518,28 @@ Authorization: Bearer <access_token>
   ```
 - رد نجاح (200): يحتوي على الوقت الجديد والحالة.
 
+#### 2.3.6 POST /scheduling/api/mark-missed/<schedule_id>/
+- الوصف: تسجيل جرعة كمفقودة من قبل الطبيب.
+- الصلاحيات: مسجل دخول وطبيب مرتبط فقط.
+- Body (JSON) اختياري:
+  ```json
+  {
+    "reason": "الجرعة حرجة وتم تسجيلها مفقودة"
+  }
+  ```
+- رد نجاح (200): يحتوي على `schedule_id`, `status`, `delay_minutes`, `notes`.
+
+#### 2.3.7 POST /scheduling/api/double-next/<schedule_id>/
+- الوصف: بعد تسجيل جرعة كمفقودة، يضاعف الطبيب الجرعة القادمة في أقرب جدول فعال.
+- الصلاحيات: مسجل دخول وطبيب مرتبط فقط.
+- Body (JSON) اختياري:
+  ```json
+  {
+    "reason": "تم مضاعفة الجرعة القادمة بسبب جرعة فائتة"
+  }
+  ```
+- رد نجاح (200): يحتوي على `missed_schedule_id`, `next_schedule_id`, `original_dose`, `new_dose`, `next_schedule_notes`.
+
 ---
 
 ### 2.4 Notifications API

@@ -5,7 +5,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.db.models import Q
 from datetime import datetime, date, timedelta
+import re
 from accounts.models import UserRelationship
 from .models import SmartSchedule
 from .serializers import SmartScheduleSerializer
@@ -244,7 +246,7 @@ def generate_smart_schedule(request):
             'message': 'لا يمكنك توليد جدول لمريض آخر'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    #  الطبيب/الممرض: لا يسمح للممرض بالكتابة هنا
+    #  الطبيب: يولد جدول لمرضاه فقط
     if current_user.user_type == 'doctor':
         is_related = UserRelationship.objects.filter(
             doctor=current_user,
@@ -262,11 +264,6 @@ def generate_smart_schedule(request):
             'status': 'error',
             'message': 'لا يمكن للممرض إنشاء جدول أو تعديل الجرعات'
         }, status=status.HTTP_403_FORBIDDEN)
-        if not is_related:
-            return Response({
-                'status': 'error',
-                'message': 'هذا المريض ليس من مرضاك'
-            }, status=status.HTTP_403_FORBIDDEN)
     
     try:
         patient = User.objects.get(id=patient_id, user_type='patient')
@@ -285,8 +282,13 @@ def generate_smart_schedule(request):
         else:
             start_date = date.today()
         
-        # حذف الجدول القديم
-        SmartSchedule.objects.filter(patient=patient, scheduled_date__gte=start_date).delete()
+        # حذف الجدول القديم للحالات الآلية فقط، مع الاحتفاظ بأي جدول تم تعديله يدوياً
+        SmartSchedule.objects.filter(
+            patient=patient,
+            scheduled_date__gte=start_date,
+            status='pending',
+            notes=''
+        ).delete()
         
         # توليد الجدول الذكي
         scheduler = SmartScheduler(patient)
@@ -456,6 +458,34 @@ def postpone_medication(request, schedule_id):
         schedule.status = 'postponed'
         schedule.notes = request.data.get('reason', f'تأجيل {minutes} دقيقة')
         schedule.save()
+
+        # إشعار الطبيب والممرض المرتبطين بالمريض
+        caregivers = UserRelationship.objects.filter(
+            patient=schedule.patient,
+            relationship_type__in=['doctor_patient', 'nurse_patient'],
+            status='active'
+        )
+        for relation in caregivers:
+            Notification.objects.create(
+                user=relation.doctor,
+                schedule=schedule,
+                notification_type='critical_alert',
+                title='تم تأجيل جرعة',
+                message=(
+                    f'قام المريض {schedule.patient.get_full_name()} بتأجيل الجرعة ' 
+                    f'من {schedule.medication.name if schedule.medication else "الدواء"} ' 
+                    f'لمدة {minutes} دقيقة.'
+                ),
+                channel='in_app',
+                status='pending',
+                scheduled_for=timezone.now(),
+                metadata={
+                    'patient_id': schedule.patient.id,
+                    'schedule_id': schedule.id,
+                    'reason': schedule.notes,
+                    'recipient_type': 'doctor_or_nurse'
+                }
+            )
         
         return Response({
             'status': 'success',
@@ -472,9 +502,284 @@ def postpone_medication(request, schedule_id):
             'status': 'error',
             'message': 'الجرعة غير موجودة'
         }, status=status.HTTP_404_NOT_FOUND)
-        
-        
-        
+
+
+def _can_access_schedule(current_user, schedule):
+    if current_user.user_type == 'patient':
+        return current_user.id == schedule.patient.id
+    if current_user.user_type == 'doctor':
+        return UserRelationship.objects.filter(
+            doctor=current_user,
+            patient=schedule.patient,
+            relationship_type='doctor_patient',
+            status='active'
+        ).exists()
+    return False
+
+
+def _get_next_upcoming_schedule(schedule):
+    return SmartSchedule.objects.filter(
+        patient=schedule.patient,
+        medication=schedule.medication,
+        status__in=['pending', 'postponed']
+    ).filter(
+        Q(scheduled_date__gt=schedule.scheduled_date) |
+        Q(scheduled_date=schedule.scheduled_date, scheduled_time__gt=schedule.scheduled_time)
+    ).order_by('scheduled_date', 'scheduled_time').first()
+
+
+def _double_dose_string(calculated_dose):
+    if not calculated_dose:
+        return calculated_dose
+
+    match = re.search(r'(?P<amount>\d+(?:[.,]\d+)?)\s*(?P<unit>mg|g|ml|tablet|tab|capsule|pill|tabs?)?', calculated_dose, re.I)
+    if not match:
+        return f'2x {calculated_dose}'
+
+    raw_amount = match.group('amount').replace(',', '.')
+    unit = match.group('unit') or ''
+    try:
+        amount = float(raw_amount)
+        doubled = amount * 2
+        formatted = int(doubled) if doubled.is_integer() else round(doubled, 2)
+        return f'{formatted}{unit}'
+    except ValueError:
+        return f'2x {calculated_dose}'
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_as_missed_by_doctor(request, schedule_id):
+    """
+     الصلاحية: الطبيب يحدد جرعة مفقودة
+    API لتسجيل الجرعة كمفقودة يدويًا من قبل الطبيب
+    """
+    try:
+        schedule = SmartSchedule.objects.get(id=schedule_id)
+        current_user = request.user
+        _update_overdue_schedules(schedule.patient)
+        schedule.refresh_from_db()
+
+        if current_user.user_type != 'doctor':
+            return Response({
+                'status': 'error',
+                'message': 'فقط الطبيب يمكنه استخدام هذا الأمر'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        if not _can_access_schedule(current_user, schedule):
+            return Response({
+                'status': 'error',
+                'message': 'هذا المريض ليس من مرضاك'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        if schedule.taken:
+            return Response({
+                'status': 'error',
+                'message': 'لا يمكن تسجيل جرعة مأخوذة كمفقودة'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        scheduled_dt = datetime.combine(schedule.scheduled_date, schedule.scheduled_time)
+        scheduled_dt = timezone.make_aware(scheduled_dt)
+        now = timezone.now()
+        delay = max(int((now - scheduled_dt).total_seconds() // 60), 0)
+
+        schedule.status = 'missed'
+        schedule.taken = False
+        schedule.is_delayed = True
+        schedule.delay_minutes = max(schedule.delay_minutes, delay)
+        schedule.notes = request.data.get('reason', 'تم تسجيل الجرعة كمفقودة من قبل الطبيب.')
+        schedule.save(update_fields=['status', 'taken', 'is_delayed', 'delay_minutes', 'notes', 'updated_at'])
+
+        # إشعار المريض والأطباء المرتبطين
+        caregivers = UserRelationship.objects.filter(
+            patient=schedule.patient,
+            relationship_type__in=['doctor_patient', 'nurse_patient'],
+            status='active'
+        )
+        for relation in caregivers:
+            Notification.objects.create(
+                user=relation.doctor,
+                schedule=schedule,
+                notification_type='doctor_decision',
+                title='تم تسجيل جرعة مفقودة',
+                message=(
+                    f'قام الطبيب {current_user.get_full_name()} بتسجيل الجرعة الخاصة بالمريض '
+                    f'{schedule.patient.get_full_name()} في {schedule.scheduled_date} {schedule.scheduled_time} كمفقودة.'
+                ),
+                channel='in_app',
+                status='pending',
+                scheduled_for=timezone.now(),
+                metadata={
+                    'patient_id': schedule.patient.id,
+                    'schedule_id': schedule.id,
+                    'action': 'mark_missed',
+                    'recipient_type': 'doctor_or_nurse'
+                }
+            )
+
+        Notification.objects.create(
+            user=schedule.patient,
+            schedule=schedule,
+            notification_type='doctor_decision',
+            title='تم تسجيل جرعتك كمفقودة',
+            message=(
+                f'قام الطبيب {current_user.get_full_name()} بتسجيل جرعتك المقررة في '
+                f'{schedule.scheduled_date} {schedule.scheduled_time} كمفقودة.'
+            ),
+            channel='in_app',
+            status='pending',
+            scheduled_for=timezone.now(),
+            metadata={
+                'patient_id': schedule.patient.id,
+                'schedule_id': schedule.id,
+                'action': 'mark_missed',
+                'recipient_type': 'patient'
+            }
+        )
+
+        return Response({
+            'status': 'success',
+            'message': 'تم تسجيل الجرعة كمفقودة بنجاح',
+            'data': {
+                'schedule_id': schedule.id,
+                'status': schedule.status,
+                'delay_minutes': schedule.delay_minutes,
+                'notes': schedule.notes
+            }
+        }, status=status.HTTP_200_OK)
+
+    except SmartSchedule.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'الجرعة غير موجودة'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def double_next_dose(request, schedule_id):
+    """
+     الصلاحية: الطبيب يضاعف أقرب جرعة قادمة بعد تسجيل الجرعة الحالية كمفقودة
+    API لمضاعفة الجرعة القادمة بعد جرعة مفقودة
+    """
+    try:
+        schedule = SmartSchedule.objects.get(id=schedule_id)
+        current_user = request.user
+        _update_overdue_schedules(schedule.patient)
+        schedule.refresh_from_db()
+
+        if current_user.user_type != 'doctor':
+            return Response({
+                'status': 'error',
+                'message': 'فقط الطبيب يمكنه استخدام هذا الأمر'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        if not _can_access_schedule(current_user, schedule):
+            return Response({
+                'status': 'error',
+                'message': 'هذا المريض ليس من مرضاك'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        if schedule.taken:
+            return Response({
+                'status': 'error',
+                'message': 'لا يمكن مضاعفة الجرعة بعد أخذها'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        next_schedule = _get_next_upcoming_schedule(schedule)
+        if not next_schedule:
+            return Response({
+                'status': 'error',
+                'message': 'لا توجد جرعة قادمة يمكن مضاعفتها'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        scheduled_dt = datetime.combine(schedule.scheduled_date, schedule.scheduled_time)
+        scheduled_dt = timezone.make_aware(scheduled_dt)
+        now = timezone.now()
+        delay = max(int((now - scheduled_dt).total_seconds() // 60), 0)
+
+        schedule.status = 'missed'
+        schedule.taken = False
+        schedule.is_delayed = True
+        schedule.delay_minutes = max(schedule.delay_minutes, delay)
+        schedule.notes = request.data.get('reason', 'تم تسجيل الجرعة المفقودة من قبل الطبيب. سيتم مضاعفة الجرعة القادمة.')
+        schedule.save(update_fields=['status', 'taken', 'is_delayed', 'delay_minutes', 'notes', 'updated_at'])
+
+        original_dose = next_schedule.calculated_dose
+        next_schedule.calculated_dose = _double_dose_string(original_dose)
+        existing_notes = next_schedule.notes or ''
+        next_schedule.notes = (
+            f'{existing_notes} | تم مضاعفة الجرعة هذه تلقائياً بسبب جرعة فائتة.'
+        ).strip(' |')
+        next_schedule.doctor_decision = 'double_next'
+        next_schedule.doctor_decision_at = timezone.now()
+        next_schedule.save(update_fields=['calculated_dose', 'notes', 'doctor_decision', 'doctor_decision_at', 'updated_at'])
+
+        caregivers = UserRelationship.objects.filter(
+            patient=schedule.patient,
+            relationship_type__in=['doctor_patient', 'nurse_patient'],
+            status='active'
+        )
+        for relation in caregivers:
+            Notification.objects.create(
+                user=relation.doctor,
+                schedule=next_schedule,
+                notification_type='doctor_decision',
+                title='تم مضاعفة الجرعة القادمة',
+                message=(
+                    f'قام الطبيب {current_user.get_full_name()} بمضاعفة الجرعة القادمة للمريض '
+                    f'{schedule.patient.get_full_name()} إلى {next_schedule.calculated_dose}.'
+                ),
+                channel='in_app',
+                status='pending',
+                scheduled_for=timezone.now(),
+                metadata={
+                    'patient_id': schedule.patient.id,
+                    'schedule_id': next_schedule.id,
+                    'action': 'double_next',
+                    'recipient_type': 'doctor_or_nurse'
+                }
+            )
+
+        Notification.objects.create(
+            user=schedule.patient,
+            schedule=next_schedule,
+            notification_type='doctor_decision',
+            title='تم مضاعفة جرعتك القادمة',
+            message=(
+                f'قام الطبيب {current_user.get_full_name()} بمضاعفة الجرعة القادمة لك إلى '
+                f'{next_schedule.calculated_dose}.'
+            ),
+            channel='in_app',
+            status='pending',
+            scheduled_for=timezone.now(),
+            metadata={
+                'patient_id': schedule.patient.id,
+                'schedule_id': next_schedule.id,
+                'action': 'double_next',
+                'recipient_type': 'patient'
+            }
+        )
+
+        return Response({
+            'status': 'success',
+            'message': 'تم مضاعفة الجرعة القادمة بنجاح',
+            'data': {
+                'missed_schedule_id': schedule.id,
+                'next_schedule_id': next_schedule.id,
+                'original_dose': original_dose,
+                'new_dose': next_schedule.calculated_dose,
+                'next_schedule_notes': next_schedule.notes
+            }
+        }, status=status.HTTP_200_OK)
+
+    except SmartSchedule.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'الجرعة غير موجودة'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
     """_
 ملخص التغييرات التي أضفتها:
 التغيير	السطر

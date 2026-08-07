@@ -17,6 +17,16 @@ class SmartSchedule(models.Model):
     delay_minutes = models.IntegerField(default=0)
     is_critical = models.BooleanField(default=False)
     reminder_sent = models.BooleanField(default=False)
+
+    DOCTOR_DECISIONS = [
+        ('double_next', 'مضاعفة الجرعة القادمة'),
+        ('skip', 'تخطي الجرعة'),
+        ('take_later', 'أخذها لاحقاً'),
+        ('reschedule', 'إعادة جدولتها'),
+    ]
+    doctor_decision = models.CharField(max_length=20, choices=DOCTOR_DECISIONS, null=True, blank=True)
+    doctor_decision_at = models.DateTimeField(null=True, blank=True)
+
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
