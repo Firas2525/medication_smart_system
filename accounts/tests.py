@@ -49,6 +49,38 @@ class PatientListAPITests(TestCase):
         self.assertIn('patient_two', usernames)
         self.assertNotIn('doctor_one', usernames)
 
+    def test_admin_can_list_pending_patients(self):
+        pending_patient = User.objects.create_user(
+            username='pending_patient',
+            password='123456',
+            user_type='patient',
+            is_approved=False,
+        )
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get('/accounts/api/patients/pending/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+        usernames = [item['username'] for item in response.data['data']]
+        self.assertIn('pending_patient', usernames)
+        self.assertNotIn('patient_one', usernames)
+
+    def test_admin_can_approve_patient(self):
+        pending_patient = User.objects.create_user(
+            username='pending_patient_2',
+            password='123456',
+            user_type='patient',
+            is_approved=False,
+        )
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(f'/accounts/api/patients/{pending_patient.id}/approve/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        pending_patient.refresh_from_db()
+        self.assertTrue(pending_patient.is_approved)
+
     def test_doctor_registration_accepts_plain_filename(self):
         response = self.client.post('/accounts/api/register/doctor/', {
             'username': 'doctor_plain',

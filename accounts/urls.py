@@ -10,7 +10,9 @@ urlpatterns = [
     
     # عرض الأطباء والمرضى (لـ Admin)
     path('api/doctors/pending/', views.get_pending_doctors, name='pending-doctors'),
+    path('api/nurses/pending/', views.get_pending_nurses, name='pending-nurses'),
     path('api/doctors/all/', views.get_all_doctors, name='all-doctors'),
+    path('api/patients/pending/', views.get_pending_patients, name='pending-patients'),
     path('api/patients/all/', views.get_all_patients, name='all-patients'),
 
     # العلاقات بين المريض والطبيب والممرض
@@ -25,6 +27,8 @@ urlpatterns = [
     
     # الموافقة على طبيب أو رفضه
     path('api/doctors/<int:doctor_id>/approve/', views.approve_doctor, name='approve-doctor'),
+    path('api/nurses/<int:nurse_id>/approve/', views.approve_nurse, name='approve-nurse'),
+    path('api/patients/<int:patient_id>/approve/', views.approve_patient, name='approve-patient'),
     path('api/doctors/<int:doctor_id>/reject/', views.reject_doctor, name='reject-doctor'),
     
     # معرفة حالة طلب الطبيب

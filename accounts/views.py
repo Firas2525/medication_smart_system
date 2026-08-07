@@ -227,6 +227,20 @@ def get_pending_doctors(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
+def get_pending_nurses(request):
+    """API لعرض الممرضين في انتظار الموافقة (لـ Admin فقط)"""
+    nurses = User.objects.filter(user_type='nurse', is_approved=False)
+    serializer = UserSerializer(nurses, many=True)
+
+    return Response({
+        'status': 'success',
+        'count': nurses.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def get_all_doctors(request):
     """
     API لعرض جميع الأطباء (لـ Admin فقط)
@@ -238,6 +252,20 @@ def get_all_doctors(request):
     return Response({
         'status': 'success',
         'count': doctors.count(),
+        'data': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def get_pending_patients(request):
+    """API لعرض طلبات المرضى في انتظار الموافقة (لـ Admin فقط)"""
+    patients = User.objects.filter(user_type='patient', is_approved=False)
+    serializer = UserSerializer(patients, many=True)
+
+    return Response({
+        'status': 'success',
+        'count': patients.count(),
         'data': serializer.data
     }, status=status.HTTP_200_OK)
 
@@ -257,6 +285,27 @@ def get_all_patients(request):
         'count': patients.count(),
         'data': serializer.data
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def approve_patient(request, patient_id):
+    """API للموافقة على مريض (لـ Admin فقط)"""
+    try:
+        patient = User.objects.get(id=patient_id, user_type='patient')
+        patient.is_approved = True
+        patient.save()
+
+        return Response({
+            'status': 'success',
+            'message': f'تم قبول المريض {patient.username} بنجاح'
+        }, status=status.HTTP_200_OK)
+
+    except User.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'المريض غير موجود'
+        }, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['GET'])
@@ -413,6 +462,27 @@ def get_nurse_patients(request):
         'count': relationships.count(),
         'data': serializer.data
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def approve_nurse(request, nurse_id):
+    """API للموافقة على ممرض (لـ Admin فقط)"""
+    try:
+        nurse = User.objects.get(id=nurse_id, user_type='nurse')
+        nurse.is_approved = True
+        nurse.save()
+
+        return Response({
+            'status': 'success',
+            'message': f'تم قبول الممرض {nurse.username} بنجاح'
+        }, status=status.HTTP_200_OK)
+
+    except User.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'الممرض غير موجود'
+        }, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['POST'])
