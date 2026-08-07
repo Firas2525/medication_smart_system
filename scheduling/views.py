@@ -286,6 +286,9 @@ def generate_smart_schedule(request):
             start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
         else:
             start_date = date.today()
+
+        # إذا كان التاريخ المطلوب قديماً، نبدأ من اليوم لتجنب جرعات فائتة
+        start_date = max(start_date, date.today())
         
         # حذف الجدول القديم للحالات الآلية فقط، مع الاحتفاظ بأي جدول تم تعديله يدوياً
         SmartSchedule.objects.filter(
