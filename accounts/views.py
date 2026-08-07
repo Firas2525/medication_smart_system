@@ -51,15 +51,8 @@ def login_user(request):
             'user_type': user.user_type,
             'is_staff': user.is_staff,
             'is_superuser': user.is_superuser,
-            'access': access_token,
-            'refresh': refresh_token_value
-        }
-    }, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-def refresh_token(request):
-    """تجديد access token باستخدام refresh token."""
+                'is_approved': user.is_approved,
+                'approval_status': 'approved' if user.is_approved else 'pending',
     refresh = request.data.get('refresh')
     if not refresh:
         return Response({
@@ -137,12 +130,13 @@ def register_nurse(request):
 
         return Response({
             'status': 'success',
-            'message': 'تم تسجيل الممرض بنجاح. سيتم مراجعة طلبك من قبل الإدارة.',
+            'message': 'تم تسجيل الممرض بنجاح. سيتم مراجعة طلبك من قبل الإدارة.' if not user.is_approved else 'تم تسجيل الممرض بنجاح وهو مفعل الآن.',
             'data': {
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'is_approved': user.is_approved
+                'is_approved': user.is_approved,
+                'approval_status': 'approved' if user.is_approved else 'pending'
             }
         }, status=status.HTTP_201_CREATED)
 
