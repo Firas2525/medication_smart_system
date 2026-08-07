@@ -11,8 +11,63 @@ from .models import SmartSchedule
 from .serializers import SmartScheduleSerializer
 from .scheduler import SmartScheduler
 from medications.models import PatientMedication
+from notifications.models import Notification
 
 User = get_user_model()
+
+
+def _update_overdue_schedules(patient):
+    """تحديث الجرعات المتأخرة تلقائيًا إلى missed وإرسال إشعارات للعناية ذات الصلة."""
+    if not patient:
+        return []
+
+    now = timezone.now()
+    schedules = SmartSchedule.objects.filter(
+        patient=patient,
+        taken=False,
+        status__in=['pending', 'postponed']
+    )
+
+    overdue = []
+    for schedule in schedules:
+        scheduled_dt = datetime.combine(schedule.scheduled_date, schedule.scheduled_time)
+        scheduled_dt = timezone.make_aware(scheduled_dt)
+        if scheduled_dt <= now - timedelta(minutes=5):
+            schedule.status = 'missed'
+            schedule.is_delayed = True
+            schedule.delay_minutes = max(schedule.delay_minutes, int((now - scheduled_dt).total_seconds() // 60))
+            schedule.save(update_fields=['status', 'is_delayed', 'delay_minutes', 'updated_at'])
+            overdue.append(schedule)
+
+    if overdue:
+        related_users = []
+        for relation in UserRelationship.objects.filter(patient=patient, status='active'):
+            if relation.relationship_type in ['doctor_patient', 'nurse_patient']:
+                related_users.append(relation.doctor)
+
+        for schedule in overdue:
+            for caregiver in related_users:
+                Notification.objects.create(
+                    user=caregiver,
+                    schedule=schedule,
+                    notification_type='critical_alert',
+                    title='جرعة متأخرة',
+                    message=f'لم يتم أخذ الجرعة {schedule.medication.name if hasattr(schedule.medication, "name") else "الجرعة"} خلال 5 دقائق من موعدها للمريض {patient.get_full_name()}.',
+                    status='pending',
+                    scheduled_for=now,
+                )
+
+            Notification.objects.create(
+                user=patient,
+                schedule=schedule,
+                notification_type='critical_alert',
+                title='تذكير جرعة متأخرة',
+                message='تم تجاوز نافذة الجرعة والجرعة تُعتبر الآن متأخرة/مفقودة.',
+                status='pending',
+                scheduled_for=now,
+            )
+
+    return overdue
 
 
 # ========== APIs الجدولة الذكية ==========
@@ -56,6 +111,7 @@ def get_patient_schedule(request, patient_id):
         patient = User.objects.get(id=patient_id, user_type='patient')
         
         # فلترة حسب التاريخ
+        _update_overdue_schedules(patient)
         schedules = SmartSchedule.objects.filter(patient=patient)
         
         filter_date = request.GET.get('date')
@@ -124,6 +180,7 @@ def today_schedule(request, patient_id):
         patient = User.objects.get(id=patient_id, user_type='patient')
         today = date.today()
         
+        _update_overdue_schedules(patient)
         schedules = SmartSchedule.objects.filter(
             patient=patient,
             scheduled_date=today
@@ -258,6 +315,8 @@ def mark_as_taken(request, schedule_id):
     try:
         schedule = SmartSchedule.objects.get(id=schedule_id)
         current_user = request.user
+        _update_overdue_schedules(schedule.patient)
+        schedule.refresh_from_db()
         
         #  المريض: يحدد جرعته فقط
         if current_user.user_type == 'patient' and current_user.id != schedule.patient.id:
@@ -345,6 +404,8 @@ def postpone_medication(request, schedule_id):
     try:
         schedule = SmartSchedule.objects.get(id=schedule_id)
         current_user = request.user
+        _update_overdue_schedules(schedule.patient)
+        schedule.refresh_from_db()
         
         #  المريض: يؤجل جرعته فقط
         if current_user.user_type == 'patient' and current_user.id != schedule.patient.id:
