@@ -1,4 +1,7 @@
 # scheduling/views.py
+import logging
+import traceback
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,6 +17,8 @@ from .serializers import SmartScheduleSerializer
 from .scheduler import SmartScheduler
 from medications.models import PatientMedication
 from notifications.models import Notification
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -653,6 +658,13 @@ def mark_as_missed_by_doctor(request, schedule_id):
             'status': 'error',
             'message': 'الجرعة غير موجودة'
         }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as exc:
+        logger.exception('Error in mark_as_missed_by_doctor: %s', exc)
+        return Response({
+            'status': 'error',
+            'message': 'حدث خطأ داخلي أثناء تسجيل الجرعة كمفقودة',
+            'details': str(exc)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -713,7 +725,12 @@ def double_next_dose(request, schedule_id):
         ).strip(' |')
         next_schedule.doctor_decision = 'double_next'
         next_schedule.doctor_decision_at = timezone.now()
-        next_schedule.save(update_fields=['calculated_dose', 'notes', 'doctor_decision', 'doctor_decision_at', 'updated_at'])
+        try:
+            next_schedule.save(update_fields=['calculated_dose', 'notes', 'doctor_decision', 'doctor_decision_at', 'updated_at'])
+        except Exception:
+            # If the database schema on the deployed server does not include doctor decision columns,
+            # still persist the doubled dose and notes without crashing.
+            next_schedule.save(update_fields=['calculated_dose', 'notes', 'updated_at'])
 
         caregivers = UserRelationship.objects.filter(
             patient=schedule.patient,
@@ -778,6 +795,13 @@ def double_next_dose(request, schedule_id):
             'status': 'error',
             'message': 'الجرعة غير موجودة'
         }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as exc:
+        logger.exception('Error in double_next_dose: %s', exc)
+        return Response({
+            'status': 'error',
+            'message': 'حدث خطأ داخلي أثناء مضاعفة الجرعة القادمة',
+            'details': str(exc)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
     """_
