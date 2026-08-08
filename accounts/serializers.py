@@ -11,9 +11,30 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'gender',
-                  'user_type', 'phone_number', 'specialization', 
-                  'license_number', 'license_image_url', 'is_approved']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'gender',
+            'user_type',
+            'phone_number',
+            'age',
+            'weight',
+            'blood_type',
+            'allergies',
+            'breakfast_time',
+            'lunch_time',
+            'dinner_time',
+            'emergency_contact_name',
+            'emergency_contact_phone',
+            'specialization',
+            'license_number',
+            'clinic_address',
+            'license_image_url',
+            'is_approved'
+        ]
         read_only_fields = ['is_approved']
 
     def validate_license_image_url(self, value):
