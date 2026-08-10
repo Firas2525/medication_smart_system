@@ -71,14 +71,22 @@ def drug_library_detail(request, drug_id):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_drug_to_library_api(request):
     """API لإضافة دواء جديد إلى المكتبة
     /medications/api/drugs/add/
     """
-    serializer = DrugLibrarySerializer(data=request.data)#يأخذ البيانات التي ارسلها المستخدم في جسم الطلب)
+    current_user = request.user
+    if current_user.user_type not in ['doctor', 'supervisor'] and not current_user.is_superuser:
+        return Response({
+            'status': 'error',
+            'message': 'غير مصرح لك بإضافة دواء إلى المكتبة العامة'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    serializer = DrugLibrarySerializer(data=request.data)
     
-    if serializer.is_valid():#يتحقق من  البيانات صحيحة (كل الحقول المطلوبة موجودة، الأنواع صحيحة)
-        serializer.save()#يحفظ الدواء الجديد في قاعدة البيانات
+    if serializer.is_valid():
+        serializer.save()
         return Response({
             'status': 'success',
             'message': 'تم إضافة الدواء بنجاح',
@@ -92,8 +100,16 @@ def add_drug_to_library_api(request):
 
 
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def update_drug_in_library(request, drug_id):
     """API لتعديل دواء في المكتبة"""
+    current_user = request.user
+    if current_user.user_type not in ['doctor', 'supervisor'] and not current_user.is_superuser:
+        return Response({
+            'status': 'error',
+            'message': 'غير مصرح لك بتعديل دواء في المكتبة العامة'
+        }, status=status.HTTP_403_FORBIDDEN)
+
     try:
         drug = DrugLibrary.objects.get(id=drug_id)
         serializer = DrugLibrarySerializer(drug, data=request.data, partial=True)
@@ -117,8 +133,16 @@ def update_drug_in_library(request, drug_id):
 
 
 @api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
 def delete_drug_from_library(request, drug_id):
     """API لحذف دواء من المكتبة"""
+    current_user = request.user
+    if current_user.user_type not in ['doctor', 'supervisor'] and not current_user.is_superuser:
+        return Response({
+            'status': 'error',
+            'message': 'غير مصرح لك بحذف دواء من المكتبة العامة'
+        }, status=status.HTTP_403_FORBIDDEN)
+
     try:
         drug = DrugLibrary.objects.get(id=drug_id)
         drug.delete()
