@@ -237,14 +237,26 @@ def add_patient_medication_api(request):
             'message': 'لا يمكن للممرض إضافة أو تعديل الأدوية'
         }, status=status.HTTP_403_FORBIDDEN)
     
-    # التحقق من وجود الدواء في المكتبة
-    try:
-        drug_lib = DrugLibrary.objects.get(id=data.get('drug_from_library'))
-    except DrugLibrary.DoesNotExist:
-        return Response({
-            'status': 'error',
-            'message': 'الدواء غير موجود في المكتبة'
-        }, status=status.HTTP_404_NOT_FOUND)
+    # إذا تم تحديد دواء من المكتبة العامة، نتأكد من وجوده
+    drug_from_library_id = data.get('drug_from_library')
+    if drug_from_library_id:
+        try:
+            drug_lib = DrugLibrary.objects.get(id=drug_from_library_id)
+            if not data.get('name'):
+                data['name'] = drug_lib.name
+        except DrugLibrary.DoesNotExist:
+            return Response({
+                'status': 'error',
+                'message': 'الدواء غير موجود في المكتبة'
+            }, status=status.HTTP_404_NOT_FOUND)
+    else:
+        # إذا لم يكن هناك دواء في المكتبة، يجب أن يتم تقديم اسم دواء مخصص
+        if not data.get('name'):
+            return Response({
+                'status': 'error',
+                'message': 'يجب تقديم اسم الدواء إذا لم يتم اختيار دواء من المكتبة'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        data['drug_from_library'] = None
     
     serializer = PatientMedicationSerializer(data=data)
     
