@@ -494,7 +494,11 @@ def get_patient_nurses(request):
     if current_user.user_type != 'patient':
         return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
 
-    relationships = UserRelationship.objects.filter(patient=current_user, relationship_type='nurse_patient').order_by('-created_at')
+    relationships = UserRelationship.objects.filter(
+        patient=current_user,
+        relationship_type='nurse_patient',
+        status='active'
+    ).order_by('-created_at')
     serializer = UserRelationshipSerializer(relationships, many=True)
     return Response({
         'status': 'success',
