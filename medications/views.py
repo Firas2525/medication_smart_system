@@ -600,11 +600,22 @@ def switch_to_alternative(request):
         # 4. إلغاء تنشيط الدواء القديم
         old_med.is_active = False
         old_med.save()
+
+        # 4.1 إلغاء أي جدول مستقبلي للدواء القديم
+        from scheduling.models import SmartSchedule as ExistingSmartSchedule
+        ExistingSmartSchedule.objects.filter(
+            medication=old_med,
+            scheduled_date__gte=date.today(),
+            status='pending'
+        ).update(status='skipped', notes='تم الإلغاء بعد تحويل الدواء')
         
         # 5. توليد جدول جديد للدواء الجديد
         from scheduling.scheduler import SmartScheduler
+        from scheduling.models import SmartSchedule
         scheduler = SmartScheduler(old_med.patient)
-        scheduler.generate_schedule(new_med, date.today(), 30)
+        schedules = scheduler.generate_schedule(new_med, date.today(), 30)
+        if schedules:
+            SmartSchedule.objects.bulk_create(schedules)
         
         # 6. تسجيل سبب التحويل (في notes)
         reason = data.get('reason', 'تم التحويل إلى بديل')
