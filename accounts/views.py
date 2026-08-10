@@ -399,6 +399,72 @@ def select_nurse_for_patient(request, nurse_id):
     }, status=201 if created else 200)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_doctor_for_patient(request, doctor_id):
+    """إلغاء علاقة الطبيب بالمريض من قبل المريض"""
+    current_user = request.user
+    if current_user.user_type != 'patient':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
+
+    try:
+        doctor = User.objects.get(id=doctor_id, user_type='doctor')
+    except User.DoesNotExist:
+        return Response({'status': 'error', 'message': 'الطبيب غير موجود'}, status=404)
+
+    try:
+        relationship = UserRelationship.objects.get(
+            doctor=doctor,
+            patient=current_user,
+            relationship_type='doctor_patient',
+            status='active'
+        )
+        relationship.status = 'inactive'
+        relationship.save()
+        return Response({
+            'status': 'success',
+            'message': 'تم إلغاء علاقة الطبيب بنجاح'
+        }, status=status.HTTP_200_OK)
+    except UserRelationship.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'لا توجد علاقة طبيب نشطة لهذا المريض'
+        }, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_nurse_for_patient(request, nurse_id):
+    """إلغاء علاقة الممرض بالمريض من قبل المريض"""
+    current_user = request.user
+    if current_user.user_type != 'patient':
+        return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
+
+    try:
+        nurse = User.objects.get(id=nurse_id, user_type='nurse')
+    except User.DoesNotExist:
+        return Response({'status': 'error', 'message': 'الممرض غير موجود'}, status=404)
+
+    try:
+        relationship = UserRelationship.objects.get(
+            doctor=nurse,
+            patient=current_user,
+            relationship_type='nurse_patient',
+            status='active'
+        )
+        relationship.status = 'inactive'
+        relationship.save()
+        return Response({
+            'status': 'success',
+            'message': 'تم إلغاء علاقة الممرض بنجاح'
+        }, status=status.HTTP_200_OK)
+    except UserRelationship.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'لا توجد علاقة ممرض نشطة لهذا المريض'
+        }, status=404)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_patient_doctors(request):
@@ -407,7 +473,11 @@ def get_patient_doctors(request):
     if current_user.user_type != 'patient':
         return Response({'status': 'error', 'message': 'هذا الإجراء للمريض فقط'}, status=403)
 
-    relationships = UserRelationship.objects.filter(patient=current_user, relationship_type='doctor_patient').order_by('-created_at')
+    relationships = UserRelationship.objects.filter(
+        patient=current_user,
+        relationship_type='doctor_patient',
+        status='active'
+    ).order_by('-created_at')
     serializer = UserRelationshipSerializer(relationships, many=True)
     return Response({
         'status': 'success',

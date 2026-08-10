@@ -15,7 +15,7 @@ def create_access_token(user):
     payload = {
         'user_id': user.pk,
         'type': 'access',
-        'exp': (timezone.now() + timedelta(hours=6)).timestamp(),
+        'exp': (timezone.now() + timedelta(days=365)).timestamp(),
     }
     return signing.dumps(payload)
 

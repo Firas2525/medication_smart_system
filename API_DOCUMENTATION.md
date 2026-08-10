@@ -402,17 +402,16 @@ Authorization: Bearer <access_token>
 - رد نجاح (200): يحتوي على الدواء والبدائل.
 
 #### 2.2.8 POST /medications/api/patient-medications/add/
-- الوصف: إضافة دواء لمريض.
+- الوصف: إضافة دواء خاص لمريض.
 - الصلاحيات: مسجل دخول.
-- ملاحظة: هذا المسار يضيف دواءً خاصاً بالمريض ولا يدخل في المكتبة العامة.
+- ملاحظة: هذا المسار يضيف الدواء إلى قائمة أدوية المريض فقط، ولا يُدرَج في المكتبة العامة `/medications/api/drugs/`.
 - Body (JSON) مثالياً:
   ```json
   {
     "patient": 5,
-    "drug_from_library": 2,
-    "name": "باراسيتامول",
+    "name": "دواء خاص بالمريض",
     "dosage": "500mg",
-    "frequency": "3 مرات يومياً",
+    "frequency": 3,
     "relation_to_meal": "after_meal",
     "importance_level": 3,
     "is_critical": false,
@@ -423,9 +422,27 @@ Authorization: Bearer <access_token>
     "instructions": "خذ الدواء بعد الأكل"
   }
   ```
-- حقل `drug_from_library` اختياري:
-  - إذا اخترت دواءً موجوداً في المكتبة العامة، يمكن إرسال `drug_from_library`.
-  - إذا الدواء غير موجود في المكتبة، اترك `drug_from_library` فارغاً ووفّر `name` فقط.
+- إذا أردت ربط الدواء الموجود في المكتبة العامة فقط بمريض معين، أضف أيضاً `drug_from_library`.
+- إذا كان الدواء غير موجود في المكتبة العامة، فاترك `drug_from_library` فارغاً أو احذفه، ووفّر `name` فقط.
+- مثال `curl` لدواء خاص بالمريض:
+  ```bash
+  curl -X POST "http://<your-host>/medications/api/patient-medications/add/" \
+    -H "Authorization: Bearer <access_token>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "patient": 5,
+      "name": "دواء جديد خاص",
+      "dosage": "250mg",
+      "frequency": 2,
+      "relation_to_meal": "after_meal",
+      "importance_level": 3,
+      "is_critical": false,
+      "current_stock": 10,
+      "min_stock_threshold": 2,
+      "start_date": "2026-08-10",
+      "instructions": "خذها بعد الأكل"
+    }'
+  ```
 - رد نجاح (201): يحتوي على `data` للدواء الخاص بالمريض.
 - رد خطأ (400) إذا لم تُقدّم `name` عند إضافة دواء غير موجود في المكتبة.
 - رد خطأ (404) إذا كان المريض أو الدواء العام غير موجود.
