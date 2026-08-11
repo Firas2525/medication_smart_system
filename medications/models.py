@@ -153,7 +153,7 @@ class MedicationSchedule(models.Model):
         ('taken', 'مأخوذة'),
         ('missed', 'فاتت'),
         ('postponed', 'مؤجلة'),
-        ('skipped', 'متخطاة'),
+        ('skipped', 'ملغاة'),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     taken = models.BooleanField(default=False, verbose_name="تم الأخذ")

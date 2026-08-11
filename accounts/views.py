@@ -793,15 +793,19 @@ def delete_user(request, user_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user_profile(request, user_id):
-    """عرض معلومات مستخدم (نفسه أو Admin)"""
+    """عرض ملف المستخدم الكامل.
+
+    يسمح للمريض برؤية ملفه، وللطبيب أو الممرض برؤية ملف المريض إذا
+    توجد علاقة نشطة، كما يسمح للمشرف أو الأدمن بالوصول.
+    """
     current_user = request.user
-    
-    if not current_user.is_superuser and current_user.id != user_id:
+
+    if not can_access_patient(current_user, user_id):
         return Response({
             'status': 'error',
-            'message': 'لا يمكنك رؤية بيانات مستخدم آخر'
+            'message': 'لا يمكنك رؤية بيانات هذا المستخدم'
         }, status=403)
-    
+
     try:
         user = User.objects.get(id=user_id)
         serializer = UserSerializer(user)

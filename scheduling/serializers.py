@@ -63,7 +63,7 @@ class SmartScheduleSerializer(serializers.ModelSerializer):
             'taken': 'مأخوذة',
             'missed': 'فاتت',
             'postponed': 'مؤجلة',
-            'skipped': 'متخطاة',
+            'skipped': 'ملغاة',
         }
         return status_map.get(obj.status, obj.status)
 
