@@ -40,6 +40,21 @@ class DrugLibrary(models.Model):
         if self.success_rate > 0:
             return round((self.success_rate - self.side_effect_rate * 0.5), 2)
         return 0.0
+
+    def save(self, *args, **kwargs):
+        """إعادة حساب معدل النجاح تلقائياً عند زيادة معدل الآثار الجانبية"""
+        if self.pk is not None:
+            try:
+                old_drug = DrugLibrary.objects.get(pk=self.pk)
+            except DrugLibrary.DoesNotExist:
+                old_drug = None
+
+            if old_drug is not None and self.side_effect_rate > old_drug.side_effect_rate:
+                delta = self.side_effect_rate - old_drug.side_effect_rate
+                # قيمة الخصم الافتراضية عند زيادة الآثار الجانبية
+                self.success_rate = max(0.0, self.success_rate - delta * 0.5)
+
+        super().save(*args, **kwargs)
     
     def update_rating_on_side_effect(self, severity):
         """
