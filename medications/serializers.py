@@ -5,7 +5,28 @@ from .models import DrugLibrary, PatientMedication
 
 class DrugLibrarySerializer(serializers.ModelSerializer):
     """لتحويل بيانات مكتبة الأدوية إلى JSON"""
-    
+
+    def validate(self, attrs):
+        name = attrs.get('name')
+        scientific_name = attrs.get('scientific_name')
+        if self.instance is not None:
+            if name is None:
+                name = self.instance.name
+            if scientific_name is None:
+                scientific_name = self.instance.scientific_name
+
+        if name and scientific_name:
+            duplicate_qs = DrugLibrary.objects.filter(
+                name__iexact=name.strip(),
+                scientific_name__iexact=scientific_name.strip()
+            )
+            if self.instance is not None:
+                duplicate_qs = duplicate_qs.exclude(pk=self.instance.pk)
+            if duplicate_qs.exists():
+                raise serializers.ValidationError('دواء بنفس الاسم والاسم العلمي موجود مسبقاً.')
+
+        return attrs
+
     class Meta:
         model = DrugLibrary
         fields = ['id', 'name', 'scientific_name', 'therapeutic_category', 

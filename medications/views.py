@@ -398,10 +398,25 @@ def delete_patient_medication_api(request, medication_id):
         
         medication.is_active = False
         medication.save()
-        
+
+        # حذف الجداول الذكية الآلية المستقبلية وإعادة توليد الجدول للدواء المتبقي
+        from scheduling.models import SmartSchedule
+        from scheduling.scheduler import SmartScheduler
+
+        SmartSchedule.objects.filter(
+            patient=medication.patient,
+            scheduled_date__gte=date.today(),
+            status='pending',
+            notes=''
+        ).delete()
+
+        scheduler = SmartScheduler(medication.patient)
+        schedules = scheduler.generate_for_all_medications(date.today(), 30)
+
         return Response({
             'status': 'success',
-            'message': 'تم حذف الدواء بنجاح'
+            'message': 'تم حذف الدواء بنجاح وتم تجديد الجدول الذكي تلقائياً',
+            'generated_schedules': len(schedules)
         }, status=status.HTTP_200_OK)
         
     except PatientMedication.DoesNotExist:
