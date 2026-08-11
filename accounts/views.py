@@ -644,6 +644,29 @@ def get_doctor_status(request, doctor_id):
             'status': 'error',
             'message': 'الطبيب غير موجود'
         }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET'])
+def get_nurse_status(request, nurse_id):
+    """
+    API لمعرفة حالة طلب الممرض (هل تم الموافقة أم لا)
+    طريقة الاستخدام: GET /accounts/api/nurses/<nurse_id>/status/
+    """
+    try:
+        nurse = User.objects.get(id=nurse_id, user_type='nurse')
+        
+        return Response({
+            'status': 'success',
+            'is_approved': nurse.is_approved,
+            'is_active': nurse.is_active,
+            'message': 'تم قبول طلبك' if nurse.is_approved else 'طلبك قيد المراجعة'
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'الممرض غير موجود'
+        }, status=status.HTTP_404_NOT_FOUND)
         
         
 
