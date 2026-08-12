@@ -624,6 +624,20 @@ def switch_to_alternative(request):
             status='pending'
         ).update(status='skipped', notes='تم الإلغاء بعد تحويل الدواء')
         
+        # 4.2 تحديث نسبة النجاح والآثار الجانبية للدواء القديم عند الاستبدال
+        reason = data.get('reason', 'تم التحويل إلى بديل')
+        if old_med.drug_from_library:
+            # تحديد شدة الأثر الجانبي بناءً على السبب
+            if any(word in reason.lower() for word in ['شديد', 'خطير', 'حرج', 'severe']):
+                severity = 'severe'
+            elif any(word in reason.lower() for word in ['متوسط', 'معتدل', 'moderate']):
+                severity = 'moderate'
+            else:
+                severity = 'mild'
+            
+            # تحديث تقييم الدواء القديم
+            old_med.drug_from_library.update_rating_on_side_effect(severity)
+        
         # 5. توليد جدول جديد للدواء الجديد
         from scheduling.scheduler import SmartScheduler
         from scheduling.models import SmartSchedule
@@ -633,7 +647,6 @@ def switch_to_alternative(request):
             SmartSchedule.objects.bulk_create(schedules)
         
         # 6. تسجيل سبب التحويل (في notes)
-        reason = data.get('reason', 'تم التحويل إلى بديل')
         new_med.instructions = f"{new_med.instructions}\n[تم التحويل من {old_med.name} بسبب: {reason}]"
         new_med.save()
         

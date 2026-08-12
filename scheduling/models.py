@@ -4,7 +4,7 @@ from medications.models import PatientMedication
 from accounts.models import Users
 
 class SmartSchedule(models.Model):
-    medication = models.ForeignKey(PatientMedication, on_delete=models.CASCADE)
+    medication = models.ForeignKey(PatientMedication, on_delete=models.SET_NULL, null=True, blank=True)
     patient = models.ForeignKey(Users, on_delete=models.CASCADE)
     scheduled_date = models.DateField()
     scheduled_time = models.TimeField()

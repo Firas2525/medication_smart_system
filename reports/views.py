@@ -112,7 +112,13 @@ def generate_weekly_report(request, patient_id):
         
         end_date_str = request.GET.get('end_date')
         if end_date_str:
-            end_date = date.fromisoformat(end_date_str)
+            try:
+                end_date = date.fromisoformat(end_date_str)
+            except ValueError:
+                return Response({
+                    'status': 'error',
+                    'message': f'صيغة التاريخ غير صحيحة: {end_date_str}. استخدم YYYY-MM-DD'
+                }, status=status.HTTP_400_BAD_REQUEST)
         else:
             end_date = date.today()
         
@@ -132,6 +138,11 @@ def generate_weekly_report(request, patient_id):
             'status': 'error',
             'message': 'المريض غير موجود'
         }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'status': 'error',
+            'message': f'خطأ في توليد التقرير: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -173,7 +184,13 @@ def generate_monthly_report(request, patient_id):
         
         end_date_str = request.GET.get('end_date')
         if end_date_str:
-            end_date = date.fromisoformat(end_date_str)
+            try:
+                end_date = date.fromisoformat(end_date_str)
+            except ValueError:
+                return Response({
+                    'status': 'error',
+                    'message': f'صيغة التاريخ غير صحيحة: {end_date_str}. استخدم YYYY-MM-DD'
+                }, status=status.HTTP_400_BAD_REQUEST)
         else:
             end_date = date.today()
         
@@ -193,6 +210,11 @@ def generate_monthly_report(request, patient_id):
             'status': 'error',
             'message': 'المريض غير موجود'
         }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'status': 'error',
+            'message': f'خطأ في توليد التقرير: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

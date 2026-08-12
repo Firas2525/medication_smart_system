@@ -218,7 +218,7 @@ class SideEffect(models.Model):
         ('moderate', 'متوسط'),
         ('severe', 'شديد'),
     ]
-    medication = models.ForeignKey(PatientMedication, on_delete=models.CASCADE, related_name='side_effects')
+    medication = models.ForeignKey(PatientMedication, on_delete=models.SET_NULL, null=True, blank=True, related_name='side_effects')
     patient = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='reported_side_effects')
     side_effect = models.CharField(max_length=200, verbose_name="الأثر الجانبي")
     severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES)

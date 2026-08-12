@@ -67,44 +67,26 @@ class ReportGenerator:
         from notifications.models import Notification
         from django.utils import timezone
         
-        # جلب الأطباء والمشرفين
-        contacts = self.get_patient_doctors_and_supervisors()
-        
-        # عنوان الإشعار
-        title = f"📋 تقرير جديد"
-        message = (
-            f"تم توليد تقرير {report.get_report_type_display()} للمريض {self.patient.get_full_name()}.\n"
-            f"نسبة الالتزام: {report.adherence_rate:.1f}%\n"
-            f"إجمالي الجرعات: {report.total_doses}\n"
-            f"الجرعات المأخوذة: {report.taken_doses}\n"
-            f"الجرعات الفائتة: {report.missed_doses}"
-        )
-        
-        #  1. إرسال للمريض نفسه
-        Notification.objects.create(
-            user=self.patient,
-            schedule=None,
-            notification_type='report_ready',
-            title=f"{title} - لك",
-            message=message,
-            channel='in_app',
-            status='pending',
-            scheduled_for=timezone.now(),
-            metadata={
-                'report_id': report.id,
-                'patient_id': self.patient.id,
-                'report_type': report.report_type,
-                'recipient_type': 'patient'
-            }
-        )
-        
-        #  2. إرسال للأطباء
-        for doctor in contacts['doctors']:
+        try:
+            # جلب الأطباء والمشرفين
+            contacts = self.get_patient_doctors_and_supervisors()
+            
+            # عنوان الإشعار
+            title = f"📋 تقرير جديد"
+            message = (
+                f"تم توليد تقرير {report.get_report_type_display()} للمريض {self.patient.get_full_name()}.\n"
+                f"نسبة الالتزام: {report.adherence_rate:.1f}%\n"
+                f"إجمالي الجرعات: {report.total_doses}\n"
+                f"الجرعات المأخوذة: {report.taken_doses}\n"
+                f"الجرعات الفائتة: {report.missed_doses}"
+            )
+            
+            #  1. إرسال للمريض نفسه
             Notification.objects.create(
-                user=doctor,
+                user=self.patient,
                 schedule=None,
                 notification_type='report_ready',
-                title=f"{title} - مريضك {self.patient.get_full_name()}",
+                title=f"{title} - لك",
                 message=message,
                 channel='in_app',
                 status='pending',
@@ -113,50 +95,76 @@ class ReportGenerator:
                     'report_id': report.id,
                     'patient_id': self.patient.id,
                     'report_type': report.report_type,
-                    'recipient_type': 'doctor'
+                    'recipient_type': 'patient'
                 }
             )
-        
-        #  3. إرسال للممرضين
-        for nurse in contacts['nurses']:
-            Notification.objects.create(
-                user=nurse,
-                schedule=None,
-                notification_type='report_ready',
-                title=f"{title} - المريض {self.patient.get_full_name()}",
-                message=message,
-                channel='in_app',
-                status='pending',
-                scheduled_for=timezone.now(),
-                metadata={
-                    'report_id': report.id,
-                    'patient_id': self.patient.id,
-                    'report_type': report.report_type,
-                    'recipient_type': 'nurse'
-                }
-            )
-        
-        #  4. إرسال للمشرفين
-        for supervisor in contacts['supervisors']:
-            Notification.objects.create(
-                user=supervisor,
-                schedule=None,
-                notification_type='report_ready',
-                title=f"{title} - المريض {self.patient.get_full_name()}",
-                message=message,
-                channel='in_app',
-                status='pending',
-                scheduled_for=timezone.now(),
-                metadata={
-                    'report_id': report.id,
-                    'patient_id': self.patient.id,
-                    'report_type': report.report_type,
-                    'recipient_type': 'supervisor'
-                }
-            )
-        
-        total_count = 1 + len(contacts['doctors']) + len(contacts['nurses']) + len(contacts['supervisors'])
-        return total_count
+            
+            #  2. إرسال للأطباء
+            for doctor in contacts['doctors']:
+                Notification.objects.create(
+                    user=doctor,
+                    schedule=None,
+                    notification_type='report_ready',
+                    title=f"{title} - مريضك {self.patient.get_full_name()}",
+                    message=message,
+                    channel='in_app',
+                    status='pending',
+                    scheduled_for=timezone.now(),
+                    metadata={
+                        'report_id': report.id,
+                        'patient_id': self.patient.id,
+                        'report_type': report.report_type,
+                        'recipient_type': 'doctor'
+                    }
+                )
+            
+            #  3. إرسال للممرضين
+            for nurse in contacts['nurses']:
+                try:
+                    Notification.objects.create(
+                        user=nurse,
+                        schedule=None,
+                        notification_type='report_ready',
+                        title=f"{title} - المريض {self.patient.get_full_name()}",
+                        message=message,
+                        channel='in_app',
+                        status='pending',
+                        scheduled_for=timezone.now(),
+                        metadata={
+                            'report_id': report.id,
+                            'patient_id': self.patient.id,
+                            'report_type': report.report_type,
+                            'recipient_type': 'nurse'
+                        }
+                    )
+                except Exception:
+                    pass
+            
+            #  4. إرسال للمشرفين
+            for supervisor in contacts['supervisors']:
+                try:
+                    Notification.objects.create(
+                        user=supervisor,
+                        schedule=None,
+                        notification_type='report_ready',
+                        title=f"{title} - المريض {self.patient.get_full_name()}",
+                        message=message,
+                        channel='in_app',
+                        status='pending',
+                        scheduled_for=timezone.now(),
+                        metadata={
+                            'report_id': report.id,
+                            'patient_id': self.patient.id,
+                            'report_type': report.report_type,
+                            'recipient_type': 'supervisor'
+                        }
+                    )
+                except Exception:
+                    pass
+                    
+        except Exception:
+            # إذا فشلت الإشعارات، لا نوقف توليد التقرير
+            pass
 
     def generate_weekly_report(self, end_date=None):
         if not end_date:
@@ -185,12 +193,18 @@ class ReportGenerator:
 
         missed_medications = []
         for schedule in schedules.filter(taken=False, status='missed'):
-            missed_medications.append({
-                'medication_name': schedule.medication.name,
-                'scheduled_date': schedule.scheduled_date,
-                'dosage': schedule.calculated_dose,
-                'is_critical': schedule.is_critical
-            })
+            try:
+                # التحقق من وجود الدواء (قد يكون تم حذفه)
+                if schedule.medication and schedule.medication.name:
+                    missed_medications.append({
+                        'medication_name': schedule.medication.name,
+                        'scheduled_date': schedule.scheduled_date,
+                        'dosage': schedule.calculated_dose,
+                        'is_critical': schedule.is_critical
+                    })
+            except (AttributeError, ValueError):
+                # تخطي الجداول للأدوية المحذوفة
+                continue
 
         side_effects = SideEffect.objects.filter(
             patient=self.patient,
@@ -199,11 +213,17 @@ class ReportGenerator:
         )
         side_effects_data = []
         for se in side_effects:
-            side_effects_data.append({
-                'medication_name': se.medication.name,
-                'side_effect': se.side_effect,
-                'severity': se.get_severity_display(),
-            })
+            try:
+                # التحقق من وجود الدواء (قد يكون تم حذفه)
+                if se.medication and se.medication.name:
+                    side_effects_data.append({
+                        'medication_name': se.medication.name,
+                        'side_effect': se.side_effect,
+                        'severity': se.get_severity_display(),
+                    })
+            except (AttributeError, ValueError):
+                # تخطي الآثار الجانبية للأدوية المحذوفة
+                continue
 
         detailed_data = {
             'start_date': start_date.isoformat(),
@@ -240,14 +260,23 @@ class ReportGenerator:
     def _get_medications_summary(self, schedules):
         summary = {}
         for schedule in schedules:
-            med_name = schedule.medication.name
-            if med_name not in summary:
-                summary[med_name] = {'total': 0, 'taken': 0, 'missed': 0}
-            summary[med_name]['total'] += 1
-            if schedule.taken:
-                summary[med_name]['taken'] += 1
-            else:
-                summary[med_name]['missed'] += 1
+            try:
+                # التحقق من وجود الدواء (قد يكون null بسبب حذف الدواء)
+                if not schedule.medication or not hasattr(schedule.medication, 'name') or not schedule.medication.name:
+                    continue
+                    
+                med_name = schedule.medication.name
+                if med_name not in summary:
+                    summary[med_name] = {'total': 0, 'taken': 0, 'missed': 0}
+                summary[med_name]['total'] += 1
+                if schedule.taken:
+                    summary[med_name]['taken'] += 1
+                else:
+                    summary[med_name]['missed'] += 1
+            except (AttributeError, ValueError, TypeError):
+                # تخطي الجداول للأدوية المحذوفة
+                continue
+                
         for med_name in summary:
             total = summary[med_name]['total']
             taken = summary[med_name]['taken']
