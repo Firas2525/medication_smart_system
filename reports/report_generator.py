@@ -198,7 +198,7 @@ class ReportGenerator:
                 if schedule.medication and schedule.medication.name:
                     missed_medications.append({
                         'medication_name': schedule.medication.name,
-                        'scheduled_date': schedule.scheduled_date,
+                        'scheduled_date': schedule.scheduled_date.isoformat() if hasattr(schedule.scheduled_date, 'isoformat') else str(schedule.scheduled_date),
                         'dosage': schedule.calculated_dose,
                         'is_critical': schedule.is_critical
                     })
@@ -220,6 +220,7 @@ class ReportGenerator:
                         'medication_name': se.medication.name,
                         'side_effect': se.side_effect,
                         'severity': se.get_severity_display(),
+                        'reported_at': se.reported_at.isoformat() if hasattr(se.reported_at, 'isoformat') else str(se.reported_at),
                     })
             except (AttributeError, ValueError):
                 # تخطي الآثار الجانبية للأدوية المحذوفة
@@ -233,6 +234,9 @@ class ReportGenerator:
             'side_effects': side_effects_data,
             'medications_summary': self._get_medications_summary(schedules)
         }
+
+        # تحويل أي date objects إلى strings
+        detailed_data = self._serialize_detailed_data(detailed_data)
 
         report, created = Report.objects.update_or_create(
             patient=self.patient,
@@ -293,6 +297,18 @@ class ReportGenerator:
             except:
                 return str(text)
         return str(text)
+
+    def _serialize_detailed_data(self, data):
+        """تحويل جميع date/datetime objects إلى strings لتجنب JSON serialization errors"""
+        if isinstance(data, dict):
+            return {k: self._serialize_detailed_data(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._serialize_detailed_data(item) for item in data]
+        elif hasattr(data, 'isoformat'):
+            # date أو datetime objects
+            return data.isoformat()
+        else:
+            return data
 
     def generate_pdf(self, report):
         """توليد PDF بتصميم احترافي مع ألوان وجداول (بدون رموز تعبيرية)"""
