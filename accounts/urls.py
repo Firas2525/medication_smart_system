@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/nurses/<int:nurse_id>/approve/', views.approve_nurse, name='approve-nurse'),
     path('api/patients/<int:patient_id>/approve/', views.approve_patient, name='approve-patient'),
     path('api/doctors/<int:doctor_id>/reject/', views.reject_doctor, name='reject-doctor'),
+    path('api/nurses/<int:nurse_id>/reject/', views.reject_nurse, name='reject-nurse'),
     
     # معرفة حالة طلب الطبيب والممرض
     path('api/doctors/<int:doctor_id>/status/', views.get_doctor_status, name='doctor-status'),

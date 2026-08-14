@@ -39,7 +39,7 @@ def _update_overdue_schedules(patient):
     for schedule in schedules:
         scheduled_dt = datetime.combine(schedule.scheduled_date, schedule.scheduled_time)
         scheduled_dt = timezone.make_aware(scheduled_dt)
-        if scheduled_dt <= now - timedelta(minutes=5):
+        if scheduled_dt <= now - timedelta(minutes=15):
             schedule.status = 'missed'
             schedule.is_delayed = True
             schedule.delay_minutes = max(schedule.delay_minutes, int((now - scheduled_dt).total_seconds() // 60))
@@ -53,13 +53,15 @@ def _update_overdue_schedules(patient):
                 related_users.append(relation.doctor)
 
         for schedule in overdue:
+            medication_name = schedule.medication.name if getattr(schedule, 'medication', None) and hasattr(schedule.medication, 'name') and schedule.medication.name else 'الجرعة'
+
             for caregiver in related_users:
                 Notification.objects.create(
                     user=caregiver,
                     schedule=schedule,
                     notification_type='critical_alert',
                     title='جرعة متأخرة',
-                    message=f'لم يتم أخذ الجرعة {schedule.medication.name if hasattr(schedule.medication, "name") else "الجرعة"} خلال 5 دقائق من موعدها للمريض {patient.get_full_name()}.',
+                    message=f'لم يتم أخذ جرعة {medication_name} خلال 15 دقيقة من موعدها للمريض {patient.get_full_name()}.',
                     status='pending',
                     scheduled_for=now,
                 )
@@ -69,7 +71,7 @@ def _update_overdue_schedules(patient):
                 schedule=schedule,
                 notification_type='critical_alert',
                 title='تذكير جرعة متأخرة',
-                message='تم تجاوز نافذة الجرعة والجرعة تُعتبر الآن متأخرة/مفقودة.',
+                message=f'تم تجاوز نافذة جرعة {medication_name} والجرعة تُعتبر الآن متأخرة/مفقودة.',
                 status='pending',
                 scheduled_for=now,
             )

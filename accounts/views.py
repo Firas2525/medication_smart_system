@@ -594,32 +594,52 @@ def approve_doctor(request, doctor_id):
 def reject_doctor(request, doctor_id):
     """
     API لرفض طبيب (لـ Admin فقط)
-    طريقة الاستخدام: POST /accounts/api/doctors/<doctor_id>/reject/
-    
-    البيانات المطلوبة (JSON):
-    {
-        "reason": "سبب الرفض"
-    }
+    عند الرفض يتم حذف الحساب نهائياً من قاعدة البيانات.
     """
     try:
         doctor = User.objects.get(id=doctor_id, user_type='doctor')
-        
+
         reason = request.data.get('reason', 'لم يتم تحديد سبب')
-        
-        # يمكن حذف الطبيب أو تعطيل حسابه
-        doctor.is_active = False
-        doctor.save()
-        
+
+        # حذف علاقات الطبيب أولاً لتجنب البيانات المتبقية
+        UserRelationship.objects.filter(doctor=doctor).delete()
+        doctor.delete()
+
         return Response({
             'status': 'success',
-            'message': f'تم رفض الطبيب {doctor.username}',
+            'message': f'تم رفض وحذف الطبيب {doctor.username}',
             'reason': reason
         }, status=status.HTTP_200_OK)
-        
+
     except User.DoesNotExist:
         return Response({
             'status': 'error',
             'message': 'الطبيب غير موجود'
+        }, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+def reject_nurse(request, nurse_id):
+    """API لرفض ممرض (لـ Admin فقط) - حذف الحساب نهائياً."""
+    try:
+        nurse = User.objects.get(id=nurse_id, user_type='nurse')
+
+        reason = request.data.get('reason', 'لم يتم تحديد سبب')
+
+        UserRelationship.objects.filter(doctor=nurse).delete()
+        nurse.delete()
+
+        return Response({
+            'status': 'success',
+            'message': f'تم رفض وحذف الممرض {nurse.username}',
+            'reason': reason
+        }, status=status.HTTP_200_OK)
+
+    except User.DoesNotExist:
+        return Response({
+            'status': 'error',
+            'message': 'الممرض غير موجود'
         }, status=status.HTTP_404_NOT_FOUND)
 
 
