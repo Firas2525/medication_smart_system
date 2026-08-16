@@ -350,6 +350,21 @@ def select_doctor_for_patient(request, doctor_id):
     except User.DoesNotExist:
         return Response({'status': 'error', 'message': 'الطبيب غير موجود'}, status=404)
 
+    # التحقق من وجود رابطة نشطة بالفعل
+    existing_active = UserRelationship.objects.filter(
+        doctor=doctor,
+        patient=current_user,
+        relationship_type='doctor_patient',
+        status='active'
+    ).first()
+    
+    if existing_active:
+        return Response({
+            'status': 'error',
+            'message': f'أنت مرتبط بالفعل بالطبيب {doctor.get_full_name()}'
+        }, status=400)
+    
+    # البحث عن رابطة غير نشطة وإعادة تفعيلها
     relationship, created = UserRelationship.objects.get_or_create(
         doctor=doctor,
         patient=current_user,
@@ -380,6 +395,20 @@ def select_nurse_for_patient(request, nurse_id):
         nurse = User.objects.get(id=nurse_id, user_type='nurse', is_approved=True, is_active=True)
     except User.DoesNotExist:
         return Response({'status': 'error', 'message': 'الممرض غير موجود'}, status=404)
+
+    # التحقق من وجود رابطة نشطة بالفعل
+    existing_active = UserRelationship.objects.filter(
+        doctor=nurse,
+        patient=current_user,
+        relationship_type='nurse_patient',
+        status='active'
+    ).first()
+    
+    if existing_active:
+        return Response({
+            'status': 'error',
+            'message': f'أنت مرتبط بالفعل بالممرض {nurse.get_full_name()}'
+        }, status=400)
 
     relationship, created = UserRelationship.objects.get_or_create(
         doctor=nurse,

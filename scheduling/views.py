@@ -54,10 +54,9 @@ def _update_overdue_schedules(patient):
 
         for schedule in overdue:
             medication_name = schedule.medication.name if getattr(schedule, 'medication', None) and hasattr(schedule.medication, 'name') and schedule.medication.name else 'الجرعة'
-            title = f'جرعة حرجية: {medication_name}'
             caregiver_message = (
                 f'لم يتم أخذ جرعة {medication_name} خلال 15 دقيقة من موعدها للمريض {patient.get_full_name()}. '
-                f'هذا التنبيه متعلق بجرعة حرجية ويحتاج متابعة.'
+                f'هذا التنبيه متعلق بجرعة حرجة ويحتاج متابعة.'
             )
             patient_message = (
                 f'تم تجاوز نافذة جرعة {medication_name} والجرعة تُعتبر الآن متأخرة/مفقودة. '
@@ -69,7 +68,7 @@ def _update_overdue_schedules(patient):
                     user=caregiver,
                     schedule=schedule,
                     notification_type='critical_alert',
-                    title=title,
+                    title='جرعة حرجة',
                     message=caregiver_message,
                     status='pending',
                     scheduled_for=now,
@@ -79,7 +78,7 @@ def _update_overdue_schedules(patient):
                 user=patient,
                 schedule=schedule,
                 notification_type='critical_alert',
-                title=f'تذكير حرج: {medication_name}',
+                title='جرعة حرجة',
                 message=patient_message,
                 status='pending',
                 scheduled_for=now,
