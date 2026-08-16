@@ -836,18 +836,39 @@ def update_user(request, user_id):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_user(request, user_id):
-    """حذف مستخدم (نفسه أو Admin)"""
+    """حذف مستخدم (نفسه أو Admin) مع تنظيف البيانات المرتبطة."""
     current_user = request.user
-    
-    #  التحقق من الصلاحية
-    if not current_user.is_superuser and current_user.id != user_id:
+
+    # السماح للمشرف/الأدمن فقط بحذف المستخدمين، مع السماح للمستخدم بحذف نفسه أيضاً.
+    is_admin = getattr(current_user, 'is_superuser', False) or getattr(current_user, 'is_staff', False)
+    if not is_admin and current_user.id != user_id:
         return Response({
             'status': 'error',
             'message': 'لا يمكنك حذف مستخدم آخر'
         }, status=403)
-    
+
     try:
         user = User.objects.get(id=user_id)
+
+        # تنظيف مرتبطات المستخدم قبل الحذف لتجنب أخطاء 500 عند وجود بيانات مرجعية.
+        if user.user_type == 'patient':
+            from reports.models import Report
+            from medications.models import PatientMedication, SideEffect
+            from scheduling.models import SmartSchedule
+            from notifications.models import Notification
+
+            UserRelationship.objects.filter(patient=user).delete()
+            UserRelationship.objects.filter(doctor=user).delete()
+            Report.objects.filter(patient=user).delete()
+            Notification.objects.filter(user=user).delete()
+            SideEffect.objects.filter(patient=user).delete()
+            SmartSchedule.objects.filter(patient=user).delete()
+            PatientMedication.objects.filter(patient=user).delete()
+
+        elif user.user_type in ['doctor', 'nurse']:
+            UserRelationship.objects.filter(doctor=user).delete()
+            Notification.objects.filter(user=user).delete()
+
         user.delete()
         return Response({
             'status': 'success',
@@ -858,6 +879,11 @@ def delete_user(request, user_id):
             'status': 'error',
             'message': 'المستخدم غير موجود'
         }, status=404)
+    except Exception as exc:
+        return Response({
+            'status': 'error',
+            'message': f'حدث خطأ أثناء حذف المستخدم: {str(exc)}'
+        }, status=500)
         
         
 # accounts/views.py
