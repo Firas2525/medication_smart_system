@@ -73,15 +73,14 @@ def get_patient_reports(request, patient_id):
         }, status=status.HTTP_404_NOT_FOUND)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def generate_weekly_report(request, patient_id):
     """
      الصلاحية: المريض يولد تقريره فقط | الطبيب يولد تقارير مرضاه
     API لتوليد تقرير أسبوعي لمريض
-    
-    معلمات اختيارية:
-    ?end_date=2024-01-15  (تاريخ نهاية الأسبوع)
+
+    يسمح بالـ GET أو POST، مع دعم end_date من query string أو JSON body.
     """
     current_user = request.user
     
@@ -110,7 +109,7 @@ def generate_weekly_report(request, patient_id):
     try:
         patient = User.objects.get(id=patient_id, user_type='patient')
         
-        end_date_str = request.GET.get('end_date')
+        end_date_str = request.GET.get('end_date') or request.data.get('end_date')
         if end_date_str:
             try:
                 end_date = date.fromisoformat(end_date_str)
@@ -145,15 +144,14 @@ def generate_weekly_report(request, patient_id):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def generate_monthly_report(request, patient_id):
     """
      الصلاحية: المريض يولد تقريره فقط | الطبيب يولد تقارير مرضاه
     API لتوليد تقرير شهري لمريض
-    
-    معلمات اختيارية:
-    ?end_date=2024-01-31  (تاريخ نهاية الشهر)
+
+    يسمح بالـ GET أو POST، مع دعم end_date من query string أو JSON body.
     """
     current_user = request.user
     
@@ -182,7 +180,7 @@ def generate_monthly_report(request, patient_id):
     try:
         patient = User.objects.get(id=patient_id, user_type='patient')
         
-        end_date_str = request.GET.get('end_date')
+        end_date_str = request.GET.get('end_date') or request.data.get('end_date')
         if end_date_str:
             try:
                 end_date = date.fromisoformat(end_date_str)
