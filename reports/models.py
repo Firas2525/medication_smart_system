@@ -44,7 +44,7 @@ class Report(models.Model):
     class Meta:
         verbose_name = 'تقرير'
         verbose_name_plural = 'التقارير'
-        ordering = ['-period_end']
+        ordering = ['-generated_at', '-period_end', '-created_at']
         unique_together = ['patient', 'report_type', 'period_start', 'period_end']
     
     def __str__(self):

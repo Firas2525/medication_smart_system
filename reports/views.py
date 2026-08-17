@@ -55,7 +55,7 @@ def get_patient_reports(request, patient_id):
     try:
         patient = User.objects.get(id=patient_id, user_type='patient')
         
-        reports = Report.objects.filter(patient=patient).order_by('-period_end')
+        reports = Report.objects.filter(patient=patient).select_related('patient').order_by('-generated_at', '-period_end', '-created_at')
         
         serializer = ReportSerializer(reports, many=True)
         
