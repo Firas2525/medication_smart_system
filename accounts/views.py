@@ -850,13 +850,13 @@ def delete_user(request, user_id):
     try:
         user = User.objects.get(id=user_id)
 
+        from reports.models import Report
+        from medications.models import PatientMedication, SideEffect
+        from scheduling.models import SmartSchedule
+        from notifications.models import Notification
+
         # تنظيف مرتبطات المستخدم قبل الحذف لتجنب أخطاء 500 عند وجود بيانات مرجعية.
         if user.user_type == 'patient':
-            from reports.models import Report
-            from medications.models import PatientMedication, SideEffect
-            from scheduling.models import SmartSchedule
-            from notifications.models import Notification
-
             UserRelationship.objects.filter(patient=user).delete()
             UserRelationship.objects.filter(doctor=user).delete()
             Report.objects.filter(patient=user).delete()
